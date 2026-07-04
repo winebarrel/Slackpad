@@ -119,8 +119,14 @@ private struct NodeRow: View {
 
     @ViewBuilder private func label(system: String) -> some View {
         if renaming == node.url {
+            // Explicit white field + label-coloured text so it stays legible
+            // over the row's blue selection highlight (Finder-style).
             TextField("", text: $renameText)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .foregroundStyle(Color(nsColor: .labelColor))
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 4))
                 .focused($renameFocus, equals: node.url)
                 .onSubmit(commit)
                 .onExitCommand(perform: cancel)
