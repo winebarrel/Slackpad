@@ -27,6 +27,12 @@ struct SidebarView: View {
                 )
             }
         }
+        .contextMenu {
+            // Right-click on empty space: create at the root. Row right-clicks
+            // use the row's own menu.
+            Button("新規メモ") { model.newNote(in: model.rootURL) }
+            Button("新規フォルダ") { model.newFolder(in: model.rootURL) }
+        }
         .onChange(of: selection) { _, value in
             if value != model.selection { model.userSelected(value) }
         }

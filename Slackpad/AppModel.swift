@@ -178,10 +178,11 @@ final class AppModel {
 
     /// Create an "Untitled" note file immediately and open it, with the first
     /// line ("Untitled") selected so typing replaces it (Finder-style).
-    func newNote() {
+    /// `folder` overrides the target (e.g. the root from the empty-area menu).
+    func newNote(in folder: URL? = nil) {
         guard rootURL != nil else { return }
         flush()
-        let url = Filename.uniqueURL(dir: targetFolder(), base: Self.untitled)
+        let url = Filename.uniqueURL(dir: folder ?? targetFolder(), base: Self.untitled)
         try? Self.untitled.data(using: .utf8)?.write(to: url, options: .atomic)
         reloadTree()
         selection = url
@@ -189,8 +190,8 @@ final class AppModel {
         selectFirstLineToken += 1
     }
 
-    func newFolder() {
-        let dir = targetFolder()
+    func newFolder(in folder: URL? = nil) {
+        let dir = folder ?? targetFolder()
         var name = "新規フォルダ"
         var candidate = dir.appendingPathComponent(name)
         var n = 2
