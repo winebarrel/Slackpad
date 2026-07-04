@@ -62,8 +62,6 @@ enum NoteTree {
                 return a.name.localizedStandardCompare(b.name) == .orderedAscending
             case .created:
                 return date(a.url, .creationDateKey) < date(b.url, .creationDateKey)
-            case .modified:
-                return date(a.url, .contentModificationDateKey) < date(b.url, .contentModificationDateKey)
             }
         }
         return ascending ? sorted : sorted.reversed()

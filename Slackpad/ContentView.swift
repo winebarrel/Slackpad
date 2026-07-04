@@ -26,7 +26,11 @@ struct ContentView: View {
         } detail: {
             EditorView(settings: model.settings)
         }
-        .onChange(of: model.selection) { _, value in model.onSelectionChange(value) }
+        .onChange(of: model.selection) { _, value in
+            // Defer opening the note out of the current update cycle to avoid
+            // mutating @Published state mid view-update.
+            DispatchQueue.main.async { model.onSelectionChange(value) }
+        }
         .onChange(of: model.settings.sortKey) { _, _ in model.reloadTree() }
         .onChange(of: model.settings.sortAscending) { _, _ in model.reloadTree() }
         .onChange(of: columnVisibility) { _, value in

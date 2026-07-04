@@ -121,8 +121,13 @@ final class AppModel: ObservableObject {
         Binding(
             get: { self.expanded.contains(url) },
             set: { open in
-                if open { self.expanded.insert(url) } else { self.expanded.remove(url) }
-                self.settings.expandedFolders = self.expanded.map(\.path)
+                // Defer so DisclosureGroup writing back during a tree rebuild
+                // does not mutate @Published state mid view-update
+                // ("Publishing changes from within view updates").
+                DispatchQueue.main.async {
+                    if open { self.expanded.insert(url) } else { self.expanded.remove(url) }
+                    self.settings.expandedFolders = self.expanded.map(\.path)
+                }
             }
         )
     }

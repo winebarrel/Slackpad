@@ -5,14 +5,12 @@ import Combine
 /// Sort key for the note list.
 enum SortKey: String, CaseIterable, Identifiable {
     case created
-    case modified
     case name
 
     var id: String { rawValue }
     var label: String {
         switch self {
         case .created: return "作成日"
-        case .modified: return "更新日"
         case .name: return "名前"
         }
     }
@@ -40,7 +38,7 @@ final class AppSettings: ObservableObject {
         defaults.register(defaults: [
             Key.enterToSend: true,
             Key.fontSize: 0.0,
-            Key.sortKey: SortKey.modified.rawValue,
+            Key.sortKey: SortKey.created.rawValue,
             Key.sortAscending: false,
             Key.sidebarVisible: true,
         ])
@@ -78,7 +76,7 @@ final class AppSettings: ObservableObject {
 
     // MARK: Sort
 
-    @Published var sortKey: SortKey = .modified { didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) } }
+    @Published var sortKey: SortKey = .created { didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) } }
     @Published var sortAscending: Bool = false { didSet { defaults.set(sortAscending, forKey: Key.sortAscending) } }
 
     // MARK: Restore state
@@ -114,7 +112,7 @@ final class AppSettings: ObservableObject {
         enterToSend = defaults.bool(forKey: Key.enterToSend)
         fontName = defaults.string(forKey: Key.fontName)
         fontSize = defaults.double(forKey: Key.fontSize)
-        sortKey = SortKey(rawValue: defaults.string(forKey: Key.sortKey) ?? "") ?? .modified
+        sortKey = SortKey(rawValue: defaults.string(forKey: Key.sortKey) ?? "") ?? .created
         sortAscending = defaults.bool(forKey: Key.sortAscending)
     }
 }
