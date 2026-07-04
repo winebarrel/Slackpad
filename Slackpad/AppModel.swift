@@ -120,7 +120,12 @@ final class AppModel {
 
     private func setRoot(_ url: URL, persistBookmark: Bool) {
         rootURL = url
-        if persistBookmark { settings.rootBookmark = RootDirectory.makeBookmark(for: url) }
+        // Only overwrite the persisted bookmark when regeneration succeeds, so a
+        // failed makeBookmark can't wipe a still-valid rootBookmark (which would
+        // lose the folder permission on the next launch).
+        if persistBookmark, let bookmark = RootDirectory.makeBookmark(for: url) {
+            settings.rootBookmark = bookmark
+        }
         // Keep only expansion paths that live under this root (drop a previous
         // root's paths when switching folders).
         expanded = Set(settings.expandedFolders.map { URL(fileURLWithPath: $0) }
