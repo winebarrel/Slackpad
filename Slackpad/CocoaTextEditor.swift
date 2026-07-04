@@ -29,7 +29,13 @@ struct CocoaTextEditor: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         textView.font = font
         textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.linkTextAttributes = [
+            .foregroundColor: NSColor.linkColor,
+            .cursor: NSCursor.pointingHand,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
         textView.string = text
+        Self.applyLinks(textView)
         return scroll
     }
 
@@ -42,6 +48,7 @@ struct CocoaTextEditor: NSViewRepresentable {
             context.coordinator.isProgrammatic = true
             textView.string = text
             context.coordinator.isProgrammatic = false
+            Self.applyLinks(textView)
         }
         if textView.font != font { textView.font = font }
 
@@ -70,6 +77,21 @@ struct CocoaTextEditor: NSViewRepresentable {
         }
     }
 
+    /// Mark http(s) URLs in the body as clickable links. This only adds display
+    /// attributes to the text storage; the string (and the saved .txt) stays plain.
+    static func applyLinks(_ textView: NSTextView) {
+        guard let storage = textView.textStorage else { return }
+        let text = storage.string
+        let full = NSRange(location: 0, length: (text as NSString).length)
+        storage.removeAttribute(.link, range: full)
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return }
+        detector.enumerateMatches(in: text, range: full) { match, _, _ in
+            guard let url = match?.url, url.scheme == "http" || url.scheme == "https",
+                  let range = match?.range else { return }
+            storage.addAttribute(.link, value: url, range: range)
+        }
+    }
+
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: CocoaTextEditor
         var lastScroll = 0
@@ -82,6 +104,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard !isProgrammatic, let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+            CocoaTextEditor.applyLinks(textView)
             parent.onEdit()
         }
 
