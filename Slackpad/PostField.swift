@@ -9,7 +9,9 @@ final class SendingTextView: NSTextView {
 
     override func keyDown(with event: NSEvent) {
         let isReturn = event.keyCode == 36 || event.keyCode == 76
-        if isReturn {
+        // While the IME is composing (marked text), let Return confirm the
+        // candidate instead of sending.
+        if isReturn && !hasMarkedText() {
             let shift = event.modifierFlags.contains(.shift)
             let cmd = event.modifierFlags.contains(.command)
             if enterToSend {
