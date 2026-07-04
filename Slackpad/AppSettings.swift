@@ -2,6 +2,30 @@ import Foundation
 import AppKit
 import Observation
 
+/// Timestamp prepended to a post when it is appended to the note body.
+enum PostTimestamp: String, CaseIterable, Identifiable {
+    case time
+    case dateTime
+    case none
+
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .time: return "Time"
+        case .dateTime: return "Date & time"
+        case .none: return "None"
+        }
+    }
+    /// DateFormatter pattern, or nil for no timestamp.
+    var format: String? {
+        switch self {
+        case .time: return "HH:mm"
+        case .dateTime: return "yyyy-MM-dd HH:mm"
+        case .none: return nil
+        }
+    }
+}
+
 /// Sort key for the note list.
 enum SortKey: String, CaseIterable, Identifiable {
     case created
@@ -27,6 +51,7 @@ final class AppSettings {
         static let fontSize = "fontSize"
         static let sortKey = "sortKey"
         static let sortAscending = "sortAscending"
+        static let postTimestamp = "postTimestamp"
         static let rootBookmark = "rootBookmark"
         static let lastOpenNote = "lastOpenNote"
         static let expandedFolders = "expandedFolders"
@@ -42,6 +67,7 @@ final class AppSettings {
             Key.sortKey: SortKey.created.rawValue,
             Key.sortAscending: false,
             Key.sidebarVisible: true,
+            Key.postTimestamp: PostTimestamp.time.rawValue,
         ])
     }
 
@@ -60,6 +86,9 @@ final class AppSettings {
 
     /// true: Enter sends, Shift+Enter newline. false: Enter newline, Cmd+Enter sends.
     var enterToSend: Bool = true { didSet { defaults.set(enterToSend, forKey: Key.enterToSend) } }
+
+    /// Timestamp prepended when a post is appended to the note body.
+    var postTimestamp: PostTimestamp = .time { didSet { defaults.set(postTimestamp.rawValue, forKey: Key.postTimestamp) } }
 
     // MARK: Editor font
 
@@ -115,5 +144,6 @@ final class AppSettings {
         fontSize = defaults.double(forKey: Key.fontSize)
         sortKey = SortKey(rawValue: defaults.string(forKey: Key.sortKey) ?? "") ?? .created
         sortAscending = defaults.bool(forKey: Key.sortAscending)
+        postTimestamp = PostTimestamp(rawValue: defaults.string(forKey: Key.postTimestamp) ?? "") ?? .time
     }
 }

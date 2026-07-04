@@ -24,6 +24,11 @@ struct SettingsView: View {
                     Text("Send (Shift+Return for newline)").tag(true)
                     Text("Newline (⌘Return to send)").tag(false)
                 }
+                Picker("Timestamp", selection: $settings.postTimestamp) {
+                    ForEach(PostTimestamp.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
             }
 
             Section("Location") {
