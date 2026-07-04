@@ -22,3 +22,8 @@ struct OnboardingView: View {
         .frame(minWidth: 420, minHeight: 300)
     }
 }
+
+#Preview("Slackpad") {
+    OnboardingView()
+        .environment(AppModel())
+}

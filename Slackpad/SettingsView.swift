@@ -12,8 +12,12 @@ struct SettingsView: View {
         @Bindable var settings = settings
         Form {
             Section("Slack") {
-                TextField("Webhook URL", text: $settings.webhookURL, prompt: Text("https://hooks.slack.com/services/..."))
-                    .textFieldStyle(.roundedBorder)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Webhook URL")
+                    TextField("Webhook URL", text: $settings.webhookURL, prompt: Text("https://hooks.slack.com/services/..."))
+                        .textFieldStyle(.roundedBorder)
+                        .labelsHidden()
+                }
                 if !settings.webhookURL.isEmpty, !settings.isWebhookConfigured {
                     Text("Enter a URL starting with https://")
                         .font(.caption)
@@ -76,4 +80,13 @@ struct SettingsView: View {
             set: { settings.fontName = $0.isEmpty ? nil : $0 }
         )
     }
+}
+
+#Preview("Slackpad") {
+    let model = AppModel()
+    model.settings.webhookURL = "https://hooks.slack.com/services/T000/B000/XXXX"
+    model.rootURL = URL(fileURLWithPath: "/Users/you/Documents")
+    return SettingsView()
+        .environment(model)
+        .environment(model.settings)
 }
