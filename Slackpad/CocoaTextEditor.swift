@@ -36,7 +36,14 @@ struct CocoaTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         guard let tv = scroll.documentView as? NSTextView else { return }
-        if tv.string != text { tv.string = text }
+        if tv.string != text {
+            // Setting the string can fire textDidChange synchronously; suppress
+            // the write-back so we don't publish editorText mid view-update
+            // ("Publishing changes from within view updates").
+            context.coordinator.isProgrammatic = true
+            tv.string = text
+            context.coordinator.isProgrammatic = false
+        }
         if tv.font != font { tv.font = font }
 
         let coord = context.coordinator
@@ -74,11 +81,12 @@ struct CocoaTextEditor: NSViewRepresentable {
         var lastFocus = 0
         var lastRestore = 0
         var lastSelectFirstLine = 0
+        var isProgrammatic = false
 
         init(_ parent: CocoaTextEditor) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
-            guard let tv = notification.object as? NSTextView else { return }
+            guard !isProgrammatic, let tv = notification.object as? NSTextView else { return }
             parent.text = tv.string
             parent.onEdit()
         }

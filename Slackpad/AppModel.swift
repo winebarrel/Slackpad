@@ -36,9 +36,9 @@ final class AppModel: ObservableObject {
     static let untitled = "Untitled"
 
     private let watcher = FolderWatcher()
-    private var saveWork: DispatchWorkItem?
-    private var rebuildWork: DispatchWorkItem?
-    private var errorClearToken = 0
+    private var saveTask: Task<Void, Never>?
+    private var rebuildTask: Task<Void, Never>?
+    private var errorClearTask: Task<Void, Never>?
     private var observers: [NSObjectProtocol] = []
 
     private static let timeFormatter: DateFormatter = {
@@ -111,23 +111,20 @@ final class AppModel: ObservableObject {
     }
 
     private func scheduleRebuild() {
-        rebuildWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.reloadTree() }
-        rebuildWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        rebuildTask?.cancel()
+        rebuildTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(0.3))
+            guard !Task.isCancelled else { return }
+            self?.reloadTree()
+        }
     }
 
     func expansionBinding(_ url: URL) -> Binding<Bool> {
         Binding(
             get: { self.expanded.contains(url) },
             set: { open in
-                // Defer so DisclosureGroup writing back during a tree rebuild
-                // does not mutate @Published state mid view-update
-                // ("Publishing changes from within view updates").
-                DispatchQueue.main.async {
-                    if open { self.expanded.insert(url) } else { self.expanded.remove(url) }
-                    self.settings.expandedFolders = self.expanded.map(\.path)
-                }
+                if open { self.expanded.insert(url) } else { self.expanded.remove(url) }
+                self.settings.expandedFolders = self.expanded.map(\.path)
             }
         )
     }
@@ -305,10 +302,12 @@ final class AppModel: ObservableObject {
     // MARK: Autosave
 
     func scheduleSave() {
-        saveWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.saveNow() }
-        saveWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: work)
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(0.6))
+            guard !Task.isCancelled else { return }
+            self?.saveNow()
+        }
     }
 
     func updateCursor(_ offset: Int) { currentCursor = offset }
@@ -318,7 +317,7 @@ final class AppModel: ObservableObject {
     /// change, otherwise re-writing `selection` re-enters the change handler
     /// and loops ("Publishing changes from within view updates").
     private func saveNow(reselect: Bool = true) {
-        saveWork?.cancel()
+        saveTask?.cancel()
         guard isEditorActive else { return }
         let text = editorText
         guard let current = openNoteURL else { return }
@@ -345,7 +344,7 @@ final class AppModel: ObservableObject {
     /// Persist the current buffer. Called on note switch, resign active and
     /// terminate. Empty notes are kept as-is (no cleanup).
     private func flush() {
-        saveWork?.cancel()
+        saveTask?.cancel()
         guard isEditorActive else { return }
         saveNow(reselect: false)
     }
@@ -385,11 +384,11 @@ final class AppModel: ObservableObject {
     }
 
     private func scheduleErrorClear() {
-        errorClearToken += 1
-        let token = errorClearToken
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
-            guard let self, self.errorClearToken == token else { return }
-            self.postError = nil
+        errorClearTask?.cancel()
+        errorClearTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            self?.postError = nil
         }
     }
 
