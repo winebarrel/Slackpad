@@ -98,12 +98,15 @@ struct CocoaTextEditor: NSViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, NSTextViewDelegate {
+    // Only used on the main thread.
+    final class Coordinator: NSObject, NSTextViewDelegate, @unchecked Sendable {
         var parent: CocoaTextEditor
         var lastScroll = 0
         var lastRestore = 0
         var lastSelectFirstLine = 0
         var isProgrammatic = false
+        private weak var editedTextView: NSTextView?
+        private var linkToken = 0
 
         init(_ parent: CocoaTextEditor) {
             self.parent = parent
@@ -112,8 +115,16 @@ struct CocoaTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard !isProgrammatic, let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
-            CocoaTextEditor.applyLinks(textView)
             parent.onEdit()
+            // Debounce link detection: scanning the whole document with
+            // NSDataDetector on every keystroke is O(n) and slow for big notes.
+            editedTextView = textView
+            linkToken += 1
+            let token = linkToken
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                guard let self, self.linkToken == token, let textView = self.editedTextView else { return }
+                CocoaTextEditor.applyLinks(textView)
+            }
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {

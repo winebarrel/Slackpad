@@ -43,6 +43,7 @@ final class AppModel {
     @ObservationIgnored private var rebuildTask: Task<Void, Never>?
     @ObservationIgnored private var errorClearTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private var didStart = false
 
     private static func timestamp(format: String) -> String {
         let formatter = DateFormatter()
@@ -63,6 +64,11 @@ final class AppModel {
     }
 
     func start() {
+        // Idempotent: RootView.onAppear can fire again (e.g. window reopened),
+        // and re-resolving the bookmark would unbalance security-scoped access
+        // and restart the watcher.
+        guard !didStart else { return }
+        didStart = true
         settings.load()
         sidebarVisible = settings.sidebarVisible
         if let resolved = RootDirectory.resolve(from: settings.rootBookmark) {
@@ -222,7 +228,7 @@ final class AppModel {
     /// Atomic writes replace the file (new inode), which resets its creation
     /// date and would shuffle the created-date sort on every save. Preserve the
     /// original creation date across the write.
-    private static func writePreservingCreationDate(_ data: Data, to url: URL) {
+    static func writePreservingCreationDate(_ data: Data, to url: URL) {
         let created = (try? url.resourceValues(forKeys: [.creationDateKey]))?.creationDate
         try? data.write(to: url, options: .atomic)
         if let created {

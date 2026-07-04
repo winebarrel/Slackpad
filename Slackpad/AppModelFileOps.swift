@@ -44,6 +44,7 @@ extension AppModel {
     }
 
     func newFolder(in folder: URL? = nil) {
+        guard rootURL != nil else { return }
         let dir = folder ?? targetFolder()
         var name = "New Folder"
         var candidate = dir.appendingPathComponent(name)
@@ -135,12 +136,15 @@ extension AppModel {
         let newContent = Self.replacingFirstLine(content, with: newName)
         let dir = url.deletingLastPathComponent()
         let dest = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: newContent), excluding: url)
-        try? newContent.data(using: .utf8)?.write(to: url, options: .atomic)
-        if dest != url {
-            try? FileManager.default.moveItem(at: url, to: dest)
+        // Preserve the creation date (atomic write resets it) and only move the
+        // state to `dest` when the rename actually succeeds.
+        Self.writePreservingCreationDate(newContent.data(using: .utf8) ?? Data(), to: url)
+        var final = url
+        if dest != url, (try? FileManager.default.moveItem(at: url, to: dest)) != nil {
+            final = dest
         }
-        if settings.lastOpenNote == url.path { settings.lastOpenNote = dest.path }
-        selection = dest
+        if settings.lastOpenNote == url.path { settings.lastOpenNote = final.path }
+        selection = final
         reloadTree()
     }
 
