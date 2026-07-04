@@ -17,6 +17,7 @@ struct EditorView: View {
                     focusToken: model.focusToken,
                     restoreCursor: model.restoreCursor,
                     restoreToken: model.restoreToken,
+                    selectFirstLineToken: model.selectFirstLineToken,
                     onEdit: { model.scheduleSave() },
                     onCursor: { model.updateCursor($0) }
                 )

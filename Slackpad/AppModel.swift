@@ -18,8 +18,6 @@ final class AppModel: ObservableObject {
     // Editor
     @Published var editorText: String = ""
     @Published private(set) var openNoteURL: URL?
-    @Published private(set) var isNewUnsaved: Bool = false
-    private var newNoteParent: URL?
     private var currentCursor: Int = 0
 
     // View triggers (incremented to signal the Cocoa editor)
@@ -27,12 +25,15 @@ final class AppModel: ObservableObject {
     @Published var scrollToBottomToken: Int = 0
     @Published var restoreCursor: Int = 0
     @Published var restoreToken: Int = 0
+    @Published var selectFirstLineToken: Int = 0
 
     // Posting
     @Published var isSending: Bool = false
     @Published var postError: String?
 
-    var isEditorActive: Bool { openNoteURL != nil || isNewUnsaved }
+    var isEditorActive: Bool { openNoteURL != nil }
+
+    static let untitled = "Untitled"
 
     private let watcher = FolderWatcher()
     private var saveWork: DispatchWorkItem?
@@ -136,7 +137,6 @@ final class AppModel: ObservableObject {
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
         if isDir.boolValue {
             clearEditor()
-            newNoteParent = url
         } else {
             openNote(url)
         }
@@ -145,8 +145,6 @@ final class AppModel: ObservableObject {
     private func openNote(_ url: URL) {
         editorText = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         openNoteURL = url
-        isNewUnsaved = false
-        newNoteParent = url.deletingLastPathComponent()
         currentCursor = 0
         settings.lastOpenNote = url.path
         focusToken += 1
@@ -154,9 +152,7 @@ final class AppModel: ObservableObject {
 
     private func clearEditor() {
         openNoteURL = nil
-        isNewUnsaved = false
         editorText = ""
-        newNoteParent = nil
     }
 
     private func targetFolder() -> URL {
@@ -170,15 +166,17 @@ final class AppModel: ObservableObject {
 
     // MARK: CRUD
 
+    /// Create an "Untitled" note file immediately and open it, with the first
+    /// line ("Untitled") selected so typing replaces it (Finder-style).
     func newNote() {
         guard rootURL != nil else { return }
         flush()
-        newNoteParent = targetFolder()
-        editorText = ""
-        openNoteURL = nil
-        isNewUnsaved = true
-        currentCursor = 0
-        focusToken += 1
+        let url = Filename.uniqueURL(dir: targetFolder(), base: Self.untitled)
+        try? Self.untitled.data(using: .utf8)?.write(to: url, options: .atomic)
+        reloadTree()
+        selection = url
+        openNote(url)
+        selectFirstLineToken += 1
     }
 
     func newFolder() {
@@ -222,6 +220,83 @@ final class AppModel: ObservableObject {
         reloadTree()
     }
 
+    // MARK: Rename
+
+    /// Rename a sidebar item. Folders rename in place; for a note, renaming
+    /// rewrites its first line (which is the source of truth for its filename).
+    func rename(_ url: URL, to newName: String) {
+        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        if isDir.boolValue {
+            renameFolder(url, to: name)
+        } else {
+            renameNote(url, to: name)
+        }
+    }
+
+    private func renameFolder(_ url: URL, to newName: String) {
+        let base = Filename.sanitize(newName)
+        let parent = url.deletingLastPathComponent()
+        var dest = parent.appendingPathComponent(base, isDirectory: true)
+        var n = 2
+        while FileManager.default.fileExists(atPath: dest.path), dest != url {
+            dest = parent.appendingPathComponent("\(base) \(n)", isDirectory: true)
+            n += 1
+        }
+        guard dest != url else { return }
+        guard (try? FileManager.default.moveItem(at: url, to: dest)) != nil else { return }
+        remapPaths(from: url, to: dest)
+        selection = dest
+        reloadTree()
+    }
+
+    private func renameNote(_ url: URL, to newName: String) {
+        if url == openNoteURL {
+            editorText = Self.replacingFirstLine(editorText, with: newName)
+            saveNow() // renames the file to match the new first line
+            return
+        }
+        let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+        let newContent = Self.replacingFirstLine(content, with: newName)
+        let dir = url.deletingLastPathComponent()
+        let dest = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: newContent), excluding: url)
+        try? newContent.data(using: .utf8)?.write(to: url, options: .atomic)
+        if dest != url {
+            try? FileManager.default.moveItem(at: url, to: dest)
+        }
+        if settings.lastOpenNote == url.path { settings.lastOpenNote = dest.path }
+        selection = dest
+        reloadTree()
+    }
+
+    /// Replace the first line of `content`, keeping the rest of the body intact.
+    private static func replacingFirstLine(_ content: String, with first: String) -> String {
+        if let nl = content.firstIndex(of: "\n") {
+            return first + String(content[nl...])
+        }
+        return first
+    }
+
+    /// After moving `oldDir` to `newDir`, fix up any state that pointed inside it.
+    private func remapPaths(from oldDir: URL, to newDir: URL) {
+        func remap(_ u: URL) -> URL? {
+            if u == oldDir { return newDir }
+            let prefix = oldDir.path + "/"
+            guard u.path.hasPrefix(prefix) else { return nil }
+            let suffix = String(u.path.dropFirst(prefix.count))
+            return newDir.appendingPathComponent(suffix)
+        }
+        if let open = openNoteURL, let moved = remap(open) {
+            openNoteURL = moved
+            settings.lastOpenNote = moved.path
+        }
+        if let sel = selection, let moved = remap(sel) { selection = moved }
+        expanded = Set(expanded.map { remap($0) ?? $0 })
+        settings.expandedFolders = expanded.map(\.path)
+    }
+
     // MARK: Autosave
 
     func scheduleSave() {
@@ -233,54 +308,41 @@ final class AppModel: ObservableObject {
 
     func updateCursor(_ offset: Int) { currentCursor = offset }
 
-    private func saveNow() {
+    /// `reselect` updates the sidebar selection to follow a created/renamed
+    /// file. It must be false when called from `flush()` during a selection
+    /// change, otherwise re-writing `selection` re-enters the change handler
+    /// and loops ("Publishing changes from within view updates").
+    private func saveNow(reselect: Bool = true) {
         saveWork?.cancel()
         guard isEditorActive else { return }
         let text = editorText
-        let isBlank = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if isBlank {
-            // Keep disk in sync but do not delete yet; empty notes are removed on transitions.
-            if let url = openNoteURL { try? Data().write(to: url, options: .atomic) }
-            return
-        }
-        let base = Filename.base(fromBody: text)
+        guard let current = openNoteURL else { return }
         let data = text.data(using: .utf8) ?? Data()
-        if isNewUnsaved {
-            let url = Filename.uniqueURL(dir: newNoteParent ?? rootURL!, base: base)
-            try? data.write(to: url, options: .atomic)
-            openNoteURL = url
-            isNewUnsaved = false
-            selection = url
-            settings.lastOpenNote = url.path
-        } else if let current = openNoteURL {
-            let dir = current.deletingLastPathComponent()
-            let desired = base + ".txt"
-            var writeURL = current
+        let dir = current.deletingLastPathComponent()
+        var writeURL = current
+        // Rename to follow the first line, but only when it is non-blank;
+        // an empty note keeps its current filename (no cleanup).
+        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let desired = Filename.base(fromBody: text) + ".txt"
             if current.lastPathComponent != desired {
-                let target = Filename.uniqueURL(dir: dir, base: base, excluding: current)
+                let target = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: text), excluding: current)
                 try? FileManager.default.moveItem(at: current, to: target)
                 openNoteURL = target
-                selection = target
                 settings.lastOpenNote = target.path
                 writeURL = target
+                if reselect, selection != target { selection = target }
             }
-            try? data.write(to: writeURL, options: .atomic)
         }
+        try? data.write(to: writeURL, options: .atomic)
         settings.lastCursor = currentCursor
     }
 
-    /// Persist or discard the current buffer. Called on note switch, resign
-    /// active and terminate. Empty notes are removed without a trace.
+    /// Persist the current buffer. Called on note switch, resign active and
+    /// terminate. Empty notes are kept as-is (no cleanup).
     private func flush() {
         saveWork?.cancel()
         guard isEditorActive else { return }
-        let isBlank = editorText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if isBlank {
-            if let url = openNoteURL { try? FileManager.default.removeItem(at: url) }
-            clearEditor()
-        } else {
-            saveNow()
-        }
+        saveNow(reselect: false)
     }
 
     // MARK: Posting

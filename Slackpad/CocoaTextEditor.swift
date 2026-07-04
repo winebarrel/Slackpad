@@ -11,6 +11,7 @@ struct CocoaTextEditor: NSViewRepresentable {
     var focusToken: Int
     var restoreCursor: Int
     var restoreToken: Int
+    var selectFirstLineToken: Int
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
 
@@ -55,6 +56,16 @@ struct CocoaTextEditor: NSViewRepresentable {
                 tv.scrollRangeToVisible(NSRange(location: offset, length: 0))
             }
         }
+        if coord.lastSelectFirstLine != selectFirstLineToken {
+            coord.lastSelectFirstLine = selectFirstLineToken
+            let ns = tv.string as NSString
+            let firstLineEnd = ns.range(of: "\n").location
+            let length = firstLineEnd == NSNotFound ? ns.length : firstLineEnd
+            DispatchQueue.main.async {
+                tv.window?.makeFirstResponder(tv)
+                tv.setSelectedRange(NSRange(location: 0, length: length))
+            }
+        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
@@ -62,6 +73,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         var lastScroll = 0
         var lastFocus = 0
         var lastRestore = 0
+        var lastSelectFirstLine = 0
 
         init(_ parent: CocoaTextEditor) { self.parent = parent }
 
