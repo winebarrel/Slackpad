@@ -1,6 +1,5 @@
-import SwiftUI
-import AppKit
 import Observation
+import SwiftUI
 
 /// Central coordinator: owns settings, the root directory, the note tree, the
 /// open note / editor buffer, autosave, external-change watching and posting.
@@ -32,7 +31,9 @@ final class AppModel {
     var isSending: Bool = false
     var postError: String?
 
-    var isEditorActive: Bool { openNoteURL != nil }
+    var isEditorActive: Bool {
+        openNoteURL != nil
+    }
 
     static let untitled = "Untitled"
 
@@ -69,7 +70,9 @@ final class AppModel {
         }
     }
 
-    var needsRoot: Bool { rootURL == nil }
+    var needsRoot: Bool {
+        rootURL == nil
+    }
 
     // MARK: Root directory
 
@@ -182,7 +185,9 @@ final class AppModel {
         }
     }
 
-    func updateCursor(_ offset: Int) { currentCursor = offset }
+    func updateCursor(_ offset: Int) {
+        currentCursor = offset
+    }
 
     /// `reselect` updates the sidebar selection to follow a created/renamed
     /// file. It must be false when called from `flush()` during a selection
@@ -265,7 +270,7 @@ final class AppModel {
         } else {
             block = text
         }
-        if !editorText.isEmpty && !editorText.hasSuffix("\n") { editorText += "\n" }
+        if !editorText.isEmpty, !editorText.hasSuffix("\n") { editorText += "\n" }
         editorText += block
         saveNow()
         scrollToBottomToken += 1
