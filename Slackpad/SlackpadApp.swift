@@ -57,8 +57,8 @@ struct WindowAccessor: NSViewRepresentable {
                 // Register observers only now, after the centering, so the
                 // transient center() move doesn't overwrite the saved position.
                 let center = NotificationCenter.default
-                center.addObserver(self, selector: #selector(save), name: NSWindow.didMoveNotification, object: window)
-                center.addObserver(self, selector: #selector(save), name: NSWindow.didEndLiveResizeNotification, object: window)
+                center.addObserver(self, selector: #selector(save(_:)), name: NSWindow.didMoveNotification, object: window)
+                center.addObserver(self, selector: #selector(save(_:)), name: NSWindow.didEndLiveResizeNotification, object: window)
             }
         }
 
@@ -67,7 +67,7 @@ struct WindowAccessor: NSViewRepresentable {
             window.setFrame(NSRectFromString(saved), display: false)
         }
 
-        @objc private func save() {
+        @objc private func save(_: Notification) {
             guard let window else { return }
             UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: key)
         }

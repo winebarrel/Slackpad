@@ -83,6 +83,11 @@ extension AppModel {
 
     /// Move a file or folder into `folder`. No-op for invalid moves.
     func move(_ src: URL, into folder: URL) {
+        // Only move items Slackpad manages; a Finder drag would otherwise
+        // relocate unrelated user files into the notes folder.
+        guard let root = rootURL,
+              src.path.hasPrefix(root.path + "/"),
+              folder == root || folder.path.hasPrefix(root.path + "/") else { return }
         guard src.deletingLastPathComponent() != folder else { return }
         guard !folder.path.hasPrefix(src.path + "/"), folder != src else { return }
         let dest = folder.appendingPathComponent(src.lastPathComponent)
