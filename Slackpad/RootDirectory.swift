@@ -1,4 +1,3 @@
-import Foundation
 import AppKit
 
 /// Resolves and persists the root notes directory using a security-scoped

@@ -1,5 +1,4 @@
 import Foundation
-import CoreServices
 
 /// Watches a directory tree with FSEvents and fires `onChange` (debounced by
 /// the stream latency) when anything under it is added, removed, renamed or
@@ -29,8 +28,8 @@ final class FolderWatcher: @unchecked Sendable {
         }
         let flags = UInt32(
             kFSEventStreamCreateFlagFileEvents |
-            kFSEventStreamCreateFlagNoDefer |
-            kFSEventStreamCreateFlagUseCFTypes
+                kFSEventStreamCreateFlagNoDefer |
+                kFSEventStreamCreateFlagUseCFTypes
         )
         guard let stream = FSEventStreamCreate(
             kCFAllocatorDefault,

@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 /// A plain-text editor backed by NSTextView. Gives us programmatic scroll,
 /// focus control and the standard macOS key bindings (emacs-style Ctrl-A/E/K
@@ -14,7 +13,9 @@ struct CocoaTextEditor: NSViewRepresentable {
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
 
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = NSTextView.scrollableTextView()
@@ -104,7 +105,9 @@ struct CocoaTextEditor: NSViewRepresentable {
         var lastSelectFirstLine = 0
         var isProgrammatic = false
 
-        init(_ parent: CocoaTextEditor) { self.parent = parent }
+        init(_ parent: CocoaTextEditor) {
+            self.parent = parent
+        }
 
         func textDidChange(_ notification: Notification) {
             guard !isProgrammatic, let textView = notification.object as? NSTextView else { return }

@@ -6,13 +6,21 @@ struct NoteNode: Identifiable, Hashable {
     let isDirectory: Bool
     var children: [NoteNode]?
 
-    var id: URL { url }
+    var id: URL {
+        url
+    }
+
     var name: String {
         isDirectory ? url.lastPathComponent : url.deletingPathExtension().lastPathComponent
     }
 
-    static func == (lhs: NoteNode, rhs: NoteNode) -> Bool { lhs.url == rhs.url }
-    func hash(into hasher: inout Hasher) { hasher.combine(url) }
+    static func == (lhs: NoteNode, rhs: NoteNode) -> Bool {
+        lhs.url == rhs.url
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+    }
 }
 
 enum NoteTree {

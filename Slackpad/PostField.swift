@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 /// NSTextView subclass that turns Return into "send" according to the
 /// configured behaviour, leaving newline insertion to the other combo.
@@ -33,11 +32,11 @@ final class SendingTextView: NSTextView {
         let isReturn = event.keyCode == 36 || event.keyCode == 76
         // While the IME is composing (marked text), let Return confirm the
         // candidate instead of sending.
-        if isReturn && !hasMarkedText() {
+        if isReturn, !hasMarkedText() {
             let shift = event.modifierFlags.contains(.shift)
             let cmd = event.modifierFlags.contains(.command)
             if enterToSend {
-                if !shift && !cmd { onSend?(); return }
+                if !shift, !cmd { onSend?(); return }
             } else {
                 if cmd { onSend?(); return }
             }
@@ -56,7 +55,9 @@ struct PostField: NSViewRepresentable {
     var onSend: () -> Void
     var onEmptyChange: (Bool) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
 
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = NSScrollView()
@@ -102,7 +103,8 @@ struct PostField: NSViewRepresentable {
         // clearing to empty with no IME composition in progress. Writing during
         // composition would reset the marked text and drop the first character.
         if textView.string != text,
-           textView.window?.firstResponder !== textView || (text.isEmpty && !textView.hasMarkedText()) {
+           textView.window?.firstResponder !== textView || (text.isEmpty && !textView.hasMarkedText())
+        {
             textView.string = text
         }
         if textView.font != font { textView.font = font }
@@ -113,7 +115,9 @@ struct PostField: NSViewRepresentable {
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: PostField
-        init(_ parent: PostField) { self.parent = parent }
+        init(_ parent: PostField) {
+            self.parent = parent
+        }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }

@@ -1,4 +1,3 @@
-import Foundation
 import AppKit
 import Observation
 
@@ -8,7 +7,10 @@ enum PostTimestamp: String, CaseIterable, Identifiable {
     case dateTime
     case none
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
+
     var label: String {
         switch self {
         case .time: return "Time"
@@ -16,6 +18,7 @@ enum PostTimestamp: String, CaseIterable, Identifiable {
         case .none: return "None"
         }
     }
+
     /// DateFormatter pattern, or nil for no timestamp.
     var format: String? {
         switch self {
@@ -31,7 +34,10 @@ enum SortKey: String, CaseIterable, Identifiable {
     case created
     case name
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
+
     var label: String {
         switch self {
         case .created: return "Date Created"
@@ -73,7 +79,9 @@ final class AppSettings {
 
     // MARK: Slack
 
-    var webhookURL: String = "" { didSet { defaults.set(webhookURL, forKey: Key.webhookURL) } }
+    var webhookURL: String = "" {
+        didSet { defaults.set(webhookURL, forKey: Key.webhookURL) }
+    }
 
     var webhookURLValue: URL? {
         let trimmed = webhookURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -82,18 +90,29 @@ final class AppSettings {
         return url
     }
 
-    var isWebhookConfigured: Bool { webhookURLValue != nil }
+    var isWebhookConfigured: Bool {
+        webhookURLValue != nil
+    }
 
     /// true: Enter sends, Shift+Enter newline. false: Enter newline, Cmd+Enter sends.
-    var enterToSend: Bool = true { didSet { defaults.set(enterToSend, forKey: Key.enterToSend) } }
+    var enterToSend: Bool = true {
+        didSet { defaults.set(enterToSend, forKey: Key.enterToSend) }
+    }
 
     /// Timestamp prepended when a post is appended to the note body.
-    var postTimestamp: PostTimestamp = .time { didSet { defaults.set(postTimestamp.rawValue, forKey: Key.postTimestamp) } }
+    var postTimestamp: PostTimestamp = .time {
+        didSet { defaults.set(postTimestamp.rawValue, forKey: Key.postTimestamp) }
+    }
 
     // MARK: Editor font
 
-    var fontName: String? { didSet { defaults.set(fontName, forKey: Key.fontName) } }
-    var fontSize: Double = 0 { didSet { defaults.set(fontSize, forKey: Key.fontSize) } }
+    var fontName: String? {
+        didSet { defaults.set(fontName, forKey: Key.fontName) }
+    }
+
+    var fontSize: Double = 0 {
+        didSet { defaults.set(fontSize, forKey: Key.fontSize) }
+    }
 
     /// The editor font. Falls back to the system font when unset.
     var editorFont: NSFont {
@@ -106,8 +125,13 @@ final class AppSettings {
 
     // MARK: Sort
 
-    var sortKey: SortKey = .created { didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) } }
-    var sortAscending: Bool = false { didSet { defaults.set(sortAscending, forKey: Key.sortAscending) } }
+    var sortKey: SortKey = .created {
+        didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) }
+    }
+
+    var sortAscending: Bool = false {
+        didSet { defaults.set(sortAscending, forKey: Key.sortAscending) }
+    }
 
     // MARK: Restore state
 

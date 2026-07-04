@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 /// The Settings window (⌘,): Slack webhook, post behaviour, save location,
 /// editor font and note sorting.
@@ -49,7 +48,7 @@ struct SettingsView: View {
                         Text(family).tag(family)
                     }
                 }
-                Stepper(value: $settings.fontSize, in: 0...48, step: 1) {
+                Stepper(value: $settings.fontSize, in: 0 ... 48, step: 1) {
                     Text(settings.fontSize > 0 ? "Size: \(Int(settings.fontSize)) pt" : "Size: Default")
                 }
             }
