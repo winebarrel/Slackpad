@@ -212,11 +212,14 @@ final class AppModel {
             let desired = Filename.base(fromBody: text) + ".txt"
             if current.lastPathComponent != desired {
                 let target = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: text), excluding: current)
-                try? FileManager.default.moveItem(at: current, to: target)
-                openNoteURL = target
-                settings.lastOpenNote = target.path
-                writeURL = target
-                if reselect, selection != target { selection = target }
+                // Only follow the rename when the move actually succeeds,
+                // otherwise we'd write to `target` and duplicate the note.
+                if (try? FileManager.default.moveItem(at: current, to: target)) != nil {
+                    openNoteURL = target
+                    settings.lastOpenNote = target.path
+                    writeURL = target
+                    if reselect, selection != target { selection = target }
+                }
             }
         }
         Self.writePreservingCreationDate(data, to: writeURL)

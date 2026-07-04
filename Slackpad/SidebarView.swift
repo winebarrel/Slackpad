@@ -150,6 +150,7 @@ private struct NodeRow: View {
                 .focused($renameFocus, equals: node.url)
                 .onSubmit(commit)
                 .onExitCommand(perform: cancel)
+                .accessibilityLabel("Name")
         } else {
             Label(node.name, systemImage: system)
                 .draggable(node.url)
