@@ -100,19 +100,28 @@ final class AppModel {
     /// Prompt for a folder. Used by onboarding and the "change folder" setting.
     func chooseRoot() {
         guard let url = RootDirectory.pick() else { return } // cancelled: keep prompting
+        // Persist a bookmark and resolve it so security-scoped access starts
+        // the same way as on launch (balancing the later stop calls).
+        guard let bookmark = RootDirectory.makeBookmark(for: url),
+              let resolved = RootDirectory.resolve(from: bookmark) else { return }
         flush()
         watcher.stop()
         rootURL?.stopAccessingSecurityScopedResource()
         clearEditor()
         selection = nil
         settings.lastOpenNote = nil
-        setRoot(url, persistBookmark: true)
+        settings.rootBookmark = bookmark
+        setRoot(resolved.url, persistBookmark: false)
     }
 
     private func setRoot(_ url: URL, persistBookmark: Bool) {
         rootURL = url
         if persistBookmark { settings.rootBookmark = RootDirectory.makeBookmark(for: url) }
-        expanded = Set(settings.expandedFolders.map { URL(fileURLWithPath: $0) })
+        // Keep only expansion paths that live under this root (drop a previous
+        // root's paths when switching folders).
+        expanded = Set(settings.expandedFolders.map { URL(fileURLWithPath: $0) }
+            .filter { $0.path.hasPrefix(url.path + "/") })
+        settings.expandedFolders = expanded.map(\.path)
         reloadTree()
         watcher.onChange = { [weak self] in self?.scheduleRebuild() }
         watcher.start(url: url)
