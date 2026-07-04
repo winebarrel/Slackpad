@@ -6,6 +6,28 @@ import AppKit
 final class SendingTextView: NSTextView {
     var enterToSend = true
     var onSend: (() -> Void)?
+    /// Reports whether the field looks empty (no text and not composing), so
+    /// the placeholder can hide the moment IME composition starts.
+    var onVisualEmptyChange: ((Bool) -> Void)?
+
+    private func reportVisualEmpty() {
+        onVisualEmptyChange?(string.isEmpty && !hasMarkedText())
+    }
+
+    override func didChangeText() {
+        super.didChangeText()
+        reportVisualEmpty()
+    }
+
+    override func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+        super.setMarkedText(string, selectedRange: selectedRange, replacementRange: replacementRange)
+        reportVisualEmpty()
+    }
+
+    override func unmarkText() {
+        super.unmarkText()
+        reportVisualEmpty()
+    }
 
     override func keyDown(with event: NSEvent) {
         let isReturn = event.keyCode == 36 || event.keyCode == 76
@@ -32,6 +54,7 @@ struct PostField: NSViewRepresentable {
     var enterToSend: Bool
     var isEnabled: Bool
     var onSend: () -> Void
+    var onEmptyChange: (Bool) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -65,6 +88,9 @@ struct PostField: NSViewRepresentable {
         tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         tv.string = text
         tv.onSend = { [weak coordinator = context.coordinator] in coordinator?.parent.onSend() }
+        tv.onVisualEmptyChange = { [weak coordinator = context.coordinator] empty in
+            coordinator?.parent.onEmptyChange(empty)
+        }
         scroll.documentView = tv
         return scroll
     }

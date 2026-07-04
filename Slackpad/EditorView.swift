@@ -6,6 +6,7 @@ struct EditorView: View {
     @Environment(AppModel.self) private var model
     let settings: AppSettings
     @State private var draft = ""
+    @State private var fieldEmpty = true
 
     var body: some View {
         @Bindable var model = model
@@ -50,11 +51,12 @@ struct EditorView: View {
                     font: settings.editorFont,
                     enterToSend: settings.enterToSend,
                     isEnabled: settings.isWebhookConfigured && !model.isSending,
-                    onSend: send
+                    onSend: send,
+                    onEmptyChange: { fieldEmpty = $0 }
                 )
                 .frame(height: 56)
 
-                if draft.isEmpty {
+                if fieldEmpty {
                     Text(placeholder)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 8)
@@ -77,5 +79,6 @@ struct EditorView: View {
         guard settings.isWebhookConfigured, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         model.post(text)
         draft = ""
+        fieldEmpty = true
     }
 }
