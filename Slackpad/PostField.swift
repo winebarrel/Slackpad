@@ -98,7 +98,13 @@ struct PostField: NSViewRepresentable {
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         context.coordinator.parent = self
         guard let tv = scroll.documentView as? SendingTextView else { return }
-        if tv.string != text { tv.string = text }
+        // Push text into the view only when it isn't being edited, or when
+        // clearing to empty with no IME composition in progress. Writing during
+        // composition would reset the marked text and drop the first character.
+        if tv.string != text,
+           tv.window?.firstResponder !== tv || (text.isEmpty && !tv.hasMarkedText()) {
+            tv.string = text
+        }
         if tv.font != font { tv.font = font }
         tv.enterToSend = enterToSend
         tv.isEditable = isEnabled

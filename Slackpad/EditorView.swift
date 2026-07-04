@@ -50,7 +50,7 @@ struct EditorView: View {
                     text: $draft,
                     font: settings.editorFont,
                     enterToSend: settings.enterToSend,
-                    isEnabled: settings.isWebhookConfigured && !model.isSending,
+                    isEnabled: settings.isWebhookConfigured,
                     onSend: send,
                     onEmptyChange: { fieldEmpty = $0 }
                 )
