@@ -19,6 +19,7 @@ struct EditorView: View {
                     restoreCursor: model.restoreCursor,
                     restoreToken: model.restoreToken,
                     selectFirstLineToken: model.selectFirstLineToken,
+                    focusToken: model.focusEditorToken,
                     onEdit: { model.scheduleSave() },
                     onCursor: { model.updateCursor($0) }
                 )
@@ -50,6 +51,7 @@ struct EditorView: View {
                     font: settings.editorFont,
                     enterToSend: settings.enterToSend,
                     isEnabled: settings.isWebhookConfigured,
+                    focusToken: model.focusPostFieldToken,
                     onSend: send,
                     onEmptyChange: { fieldEmpty = $0 }
                 )

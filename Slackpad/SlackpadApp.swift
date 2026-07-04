@@ -95,6 +95,11 @@ struct SlackpadApp: App {
                     .keyboardShortcut("n", modifiers: [.command, .shift])
                     .disabled(model.needsRoot)
             }
+            CommandGroup(after: .textEditing) {
+                Button("Toggle Editor / Slack Input") { model.toggleFieldFocus() }
+                    .keyboardShortcut("l", modifiers: .command)
+                    .disabled(!model.isEditorActive)
+            }
         }
 
         Settings {

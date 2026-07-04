@@ -52,6 +52,7 @@ struct PostField: NSViewRepresentable {
     var font: NSFont
     var enterToSend: Bool
     var isEnabled: Bool
+    var focusToken: Int
     var onSend: () -> Void
     var onEmptyChange: (Bool) -> Void
 
@@ -111,10 +112,15 @@ struct PostField: NSViewRepresentable {
         textView.enterToSend = enterToSend
         textView.isEditable = isEnabled
         textView.isSelectable = isEnabled
+        if context.coordinator.lastFocus != focusToken {
+            context.coordinator.lastFocus = focusToken
+            DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
+        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: PostField
+        var lastFocus = 0
         init(_ parent: PostField) {
             self.parent = parent
         }

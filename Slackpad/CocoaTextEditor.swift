@@ -10,6 +10,7 @@ struct CocoaTextEditor: NSViewRepresentable {
     var restoreCursor: Int
     var restoreToken: Int
     var selectFirstLineToken: Int
+    var focusToken: Int
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
 
@@ -57,6 +58,10 @@ struct CocoaTextEditor: NSViewRepresentable {
         if textView.font != font { textView.font = font }
 
         let coord = context.coordinator
+        if coord.lastFocus != focusToken {
+            coord.lastFocus = focusToken
+            DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
+        }
         if coord.lastScroll != scrollToBottomToken {
             coord.lastScroll = scrollToBottomToken
             DispatchQueue.main.async { textView.scrollToEndOfDocument(nil) }
@@ -104,6 +109,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         var lastScroll = 0
         var lastRestore = 0
         var lastSelectFirstLine = 0
+        var lastFocus = 0
         var isProgrammatic = false
         private weak var editedTextView: NSTextView?
         private var linkToken = 0

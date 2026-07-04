@@ -25,6 +25,8 @@ final class AppModel {
     var restoreCursor: Int = 0
     var restoreToken: Int = 0
     var selectFirstLineToken: Int = 0
+    var focusEditorToken: Int = 0
+    var focusPostFieldToken: Int = 0
 
     // Posting
     var isSending: Bool = false
@@ -174,6 +176,19 @@ final class AppModel {
     func clearEditor() {
         openNoteURL = nil
         editorText = ""
+    }
+
+    // MARK: Focus
+
+    /// Toggle keyboard focus between the note editor and the Slack post field
+    /// (⌘L). Uses the key window's first responder to decide the direction.
+    func toggleFieldFocus() {
+        guard isEditorActive else { return }
+        if NSApp.keyWindow?.firstResponder is SendingTextView {
+            focusEditorToken += 1
+        } else {
+            focusPostFieldToken += 1
+        }
     }
 
     // MARK: Autosave
