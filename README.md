@@ -10,6 +10,8 @@ message it goes to a Slack Incoming Webhook and is also appended to the
 current note with a timestamp, so the note keeps a record of what you
 posted.
 
+![Slackpad main window](docs/images/main.png)
+
 ## Setup
 
 On first launch Slackpad asks for a folder to store notes in. The default
@@ -42,3 +44,13 @@ sidebar sort order.
 Notes are stored as .txt files that mirror the sidebar tree, so you can
 open, edit, and back them up with any other tool. Slackpad watches the
 folder and reflects changes made outside the app.
+
+## Screenshots
+
+First launch asks where to store notes.
+
+![Onboarding](docs/images/onboarding.png)
+
+Settings hold the webhook and post options.
+
+![Settings](docs/images/settings.png)
