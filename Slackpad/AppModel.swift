@@ -42,11 +42,11 @@ final class AppModel {
     @ObservationIgnored private var errorClearTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
 
-    private static let timeFormatter: DateFormatter = {
+    private static func timestamp(format: String) -> String {
         let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        return f
-    }()
+        f.dateFormat = format
+        return f.string(from: Date())
+    }
 
     // MARK: Lifecycle
 
@@ -349,8 +349,19 @@ final class AppModel {
                 if reselect, selection != target { selection = target }
             }
         }
-        try? data.write(to: writeURL, options: .atomic)
+        Self.writePreservingCreationDate(data, to: writeURL)
         settings.lastCursor = currentCursor
+    }
+
+    /// Atomic writes replace the file (new inode), which resets its creation
+    /// date and would shuffle the created-date sort on every save. Preserve the
+    /// original creation date across the write.
+    private static func writePreservingCreationDate(_ data: Data, to url: URL) {
+        let created = (try? url.resourceValues(forKeys: [.creationDateKey]))?.creationDate
+        try? data.write(to: url, options: .atomic)
+        if let created {
+            try? FileManager.default.setAttributes([.creationDate: created], ofItemAtPath: url.path)
+        }
     }
 
     /// Persist the current buffer. Called on note switch, resign active and
@@ -385,10 +396,15 @@ final class AppModel {
     }
 
     private func appendToBody(_ text: String) {
-        let time = Self.timeFormatter.string(from: Date())
-        let lines = text.components(separatedBy: "\n")
-        let first = "\(time) \(lines[0])"
-        let block = ([first] + lines.dropFirst()).joined(separator: "\n")
+        let block: String
+        if let format = settings.postTimestamp.format {
+            let stamp = Self.timestamp(format: format)
+            let lines = text.components(separatedBy: "\n")
+            let first = "\(stamp) \(lines[0])"
+            block = ([first] + lines.dropFirst()).joined(separator: "\n")
+        } else {
+            block = text
+        }
         if !editorText.isEmpty && !editorText.hasSuffix("\n") { editorText += "\n" }
         editorText += block
         saveNow()
