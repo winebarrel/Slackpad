@@ -5,12 +5,16 @@ import SwiftUI
 /// row and pressing Return (or right-click > 名前を変更) renames it inline.
 struct SidebarView: View {
     @EnvironmentObject var model: AppModel
+    // Local selection so the List writes to @State rather than to the shared
+    // model's @Published, which would publish mid view-update on every click
+    // ("Publishing changes from within view updates"). Synced both ways below.
+    @State private var selection: URL?
     @State private var renaming: URL?
     @State private var renameText = ""
     @FocusState private var renameFocus: URL?
 
     var body: some View {
-        List(selection: $model.selection) {
+        List(selection: $selection) {
             ForEach(model.tree) { node in
                 NodeRow(
                     node: node,
@@ -23,8 +27,15 @@ struct SidebarView: View {
                 )
             }
         }
+        .onChange(of: selection) { _, value in
+            if value != model.selection { model.userSelected(value) }
+        }
+        .onChange(of: model.selection) { _, value in
+            if value != selection { selection = value }
+        }
+        .onAppear { selection = model.selection }
         .onKeyPress(.return) {
-            guard renaming == nil, let sel = model.selection else { return .ignored }
+            guard renaming == nil, let sel = selection else { return .ignored }
             begin(sel)
             return .handled
         }

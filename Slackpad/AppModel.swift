@@ -131,7 +131,14 @@ final class AppModel: ObservableObject {
 
     // MARK: Selection
 
-    func onSelectionChange(_ url: URL?) {
+    /// Called by the sidebar when the user picks a row. Keeps `selection` in
+    /// sync (for new-note/folder context) and opens/closes the editor.
+    func userSelected(_ url: URL?) {
+        selection = url
+        onSelectionChange(url)
+    }
+
+    private func onSelectionChange(_ url: URL?) {
         if let url, url == openNoteURL { return } // already open (or set programmatically)
         flush()
         guard let url else { return }

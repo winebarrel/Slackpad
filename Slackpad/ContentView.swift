@@ -26,11 +26,6 @@ struct ContentView: View {
         } detail: {
             EditorView(settings: model.settings)
         }
-        .onChange(of: model.selection) { _, value in
-            // Open/close the note outside the current update cycle so the
-            // editor state mutations don't publish mid view-update.
-            Task { @MainActor in model.onSelectionChange(value) }
-        }
         .onChange(of: model.settings.sortKey) { _, _ in model.reloadTree() }
         .onChange(of: model.settings.sortAscending) { _, _ in model.reloadTree() }
         .onChange(of: columnVisibility) { _, value in
