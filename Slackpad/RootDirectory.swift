@@ -17,6 +17,13 @@ enum RootDirectory {
             bookmarkDataIsStale: &stale
         ) else { return nil }
         guard url.startAccessingSecurityScopedResource() else { return nil }
+        // The bookmark may resolve to a moved/deleted path or a file; if so,
+        // balance the access we just started and fall back to onboarding.
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue else {
+            url.stopAccessingSecurityScopedResource()
+            return nil
+        }
         return (url, stale)
     }
 

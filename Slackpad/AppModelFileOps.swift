@@ -93,6 +93,19 @@ extension AppModel {
         return url == ancestor || url.path.hasPrefix(ancestor.path + "/")
     }
 
+    /// Move the dropped URLs that Slackpad manages (under `rootURL`) into
+    /// `folder`. Returns whether any were eligible, so an external-only drop is
+    /// rejected by the UI.
+    @discardableResult
+    func moveAll(_ urls: [URL], into folder: URL) -> Bool {
+        guard let root = rootURL else { return false }
+        let managed = urls.filter { $0.path.hasPrefix(root.path + "/") }
+        for url in managed {
+            move(url, into: folder)
+        }
+        return !managed.isEmpty
+    }
+
     /// Move a file or folder into `folder`. No-op for invalid moves.
     func move(_ src: URL, into folder: URL) {
         // Only move items Slackpad manages; a Finder drag would otherwise
