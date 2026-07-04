@@ -204,15 +204,19 @@ final class AppModel {
         reloadTree()
     }
 
-    func delete(_ url: URL) {
-        if url == openNoteURL { clearEditor(); selection = nil }
-        try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
-        reloadTree()
-    }
+    func delete(_ url: URL) { deleteAll([url]) }
 
-    func deleteSelection() {
-        guard let url = selection else { return }
-        delete(url)
+    /// Move one or more files/folders to the Trash.
+    func deleteAll(_ urls: some Collection<URL>) {
+        guard !urls.isEmpty else { return }
+        var closedOpen = false
+        for url in urls {
+            if url == openNoteURL { closedOpen = true }
+            try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
+        }
+        if closedOpen { clearEditor() }
+        selection = nil
+        reloadTree()
     }
 
     /// Move a file or folder into `folder`. No-op for invalid moves.

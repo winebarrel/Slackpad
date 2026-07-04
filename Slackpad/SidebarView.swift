@@ -8,7 +8,8 @@ struct SidebarView: View {
     // Local selection so the List writes to @State rather than to the shared
     // model's observable state, which would publish mid view-update on every
     // click ("Publishing changes from within view updates"). Synced both ways.
-    @State private var selection: URL?
+    // A Set enables multi-selection; only deletion is offered for >1 items.
+    @State private var selection: Set<URL> = []
     @State private var renaming: URL?
     @State private var renameText = ""
     @FocusState private var renameFocus: URL?
@@ -18,12 +19,14 @@ struct SidebarView: View {
             ForEach(model.tree) { node in
                 NodeRow(
                     node: node,
+                    selection: selection,
                     renaming: $renaming,
                     renameText: $renameText,
                     renameFocus: $renameFocus,
                     begin: begin,
                     commit: commit,
-                    cancel: cancel
+                    cancel: cancel,
+                    deleteSelection: { model.deleteAll(selection) }
                 )
             }
         }
@@ -34,14 +37,19 @@ struct SidebarView: View {
             Button("New Folder") { model.newFolder(in: model.rootURL) }
         }
         .onChange(of: selection) { _, value in
-            if value != model.selection { model.userSelected(value) }
+            // Open a note only for a single selection; multi-select is for
+            // deletion, so it just closes the editor.
+            let single = value.count == 1 ? value.first : nil
+            if single != model.selection { model.userSelected(single) }
         }
         .onChange(of: model.selection) { _, value in
-            if value != selection { selection = value }
+            let asSet = value.map { Set([$0]) } ?? []
+            if selection.count <= 1, selection != asSet { selection = asSet }
         }
-        .onAppear { selection = model.selection }
+        .onAppear { selection = model.selection.map { Set([$0]) } ?? [] }
+        .onDeleteCommand { model.deleteAll(selection) }
         .onKeyPress(.return) {
-            guard renaming == nil, let sel = selection else { return .ignored }
+            guard renaming == nil, selection.count == 1, let sel = selection.first else { return .ignored }
             begin(sel)
             return .handled
         }
@@ -77,12 +85,14 @@ struct SidebarView: View {
 private struct NodeRow: View {
     @Environment(AppModel.self) private var model
     let node: NoteNode
+    let selection: Set<URL>
     @Binding var renaming: URL?
     @Binding var renameText: String
     @FocusState.Binding var renameFocus: URL?
     let begin: (URL) -> Void
     let commit: () -> Void
     let cancel: () -> Void
+    let deleteSelection: () -> Void
 
     var body: some View {
         if node.isDirectory {
@@ -90,12 +100,14 @@ private struct NodeRow: View {
                 ForEach(node.children ?? []) { child in
                     NodeRow(
                         node: child,
+                        selection: selection,
                         renaming: $renaming,
                         renameText: $renameText,
                         renameFocus: $renameFocus,
                         begin: begin,
                         commit: commit,
-                        cancel: cancel
+                        cancel: cancel,
+                        deleteSelection: deleteSelection
                     )
                 }
             } label: {
@@ -137,11 +149,16 @@ private struct NodeRow: View {
     }
 
     @ViewBuilder private var menu: some View {
-        Button("Rename") { begin(node.url) }
-        Divider()
-        Button("New Note") { model.selection = node.url; model.newNote() }
-        Button("New Folder") { model.selection = node.url; model.newFolder() }
-        Divider()
-        Button("Move to Trash", role: .destructive) { model.delete(node.url) }
+        if selection.count > 1 && selection.contains(node.url) {
+            // Multi-selection: only deletion is offered.
+            Button("Move to Trash", role: .destructive, action: deleteSelection)
+        } else {
+            Button("Rename") { begin(node.url) }
+            Divider()
+            Button("New Note") { model.selection = node.url; model.newNote() }
+            Button("New Folder") { model.selection = node.url; model.newFolder() }
+            Divider()
+            Button("Move to Trash", role: .destructive) { model.delete(node.url) }
+        }
     }
 }

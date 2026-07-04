@@ -9,7 +9,6 @@ struct ContentView: View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 180, ideal: 240)
-                .onDeleteCommand { model.deleteSelection() }
                 .toolbar {
                     ToolbarItemGroup {
                         Button { model.newFolder() } label: {
