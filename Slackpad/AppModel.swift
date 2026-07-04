@@ -315,7 +315,10 @@ final class AppModel {
         saveTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(0.6))
             guard !Task.isCancelled else { return }
-            self?.saveNow()
+            // Don't re-select while the user is typing: renaming to follow the
+            // title would move the sidebar selection and steal keyboard focus
+            // from the editor.
+            self?.saveNow(reselect: false)
         }
     }
 
