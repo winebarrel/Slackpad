@@ -41,7 +41,10 @@ struct CocoaTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         guard let textView = scroll.documentView as? NSTextView else { return }
-        if textView.string != text {
+        // Never overwrite the string while the IME is composing: textDidChange
+        // doesn't fire for marked text, so `text` is stale and rewriting it here
+        // would wipe the composition and jump the caret to the end.
+        if textView.string != text, !textView.hasMarkedText() {
             // Setting the string can fire textDidChange synchronously; suppress
             // the write-back so we don't publish editorText mid view-update
             // ("Publishing changes from within view updates").
@@ -80,7 +83,9 @@ struct CocoaTextEditor: NSViewRepresentable {
     /// Mark http(s) URLs in the body as clickable links. This only adds display
     /// attributes to the text storage; the string (and the saved .txt) stays plain.
     static func applyLinks(_ textView: NSTextView) {
-        guard let storage = textView.textStorage else { return }
+        // Editing attributes during IME composition disturbs the marked text and
+        // jumps the caret; wait until composition commits.
+        guard !textView.hasMarkedText(), let storage = textView.textStorage else { return }
         let text = storage.string
         let full = NSRange(location: 0, length: (text as NSString).length)
         storage.removeAttribute(.link, range: full)
