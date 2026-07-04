@@ -64,7 +64,11 @@ struct WindowAccessor: NSViewRepresentable {
 
         private func restore() {
             guard let window, let saved = UserDefaults.standard.string(forKey: key) else { return }
-            window.setFrame(NSRectFromString(saved), display: false)
+            let frame = NSRectFromString(saved)
+            // Ignore a saved frame that no longer lands on any screen (e.g. an
+            // external display was removed), so the window can't launch offscreen.
+            guard NSScreen.screens.contains(where: { $0.visibleFrame.intersects(frame) }) else { return }
+            window.setFrame(window.constrainFrameRect(frame, to: nil), display: false)
         }
 
         @objc private func save(_: Notification) {

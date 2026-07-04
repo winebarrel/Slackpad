@@ -71,14 +71,23 @@ extension AppModel {
     /// Move one or more files/folders to the Trash.
     func deleteAll(_ urls: some Collection<URL>) {
         guard !urls.isEmpty else { return }
-        var closedOpen = false
         for url in urls {
-            if url == openNoteURL { closedOpen = true }
+            // Close the editor / drop the restore path if the deleted item is
+            // the open note or a folder that contains it.
+            if isSelfOrAncestor(url, of: openNoteURL) { clearEditor() }
+            if let last = settings.lastOpenNote, isSelfOrAncestor(url, of: URL(fileURLWithPath: last)) {
+                settings.lastOpenNote = nil
+            }
             try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
         }
-        if closedOpen { clearEditor() }
         selection = nil
         reloadTree()
+    }
+
+    /// Whether `url` is `ancestor` itself or lives inside it.
+    private func isSelfOrAncestor(_ ancestor: URL, of url: URL?) -> Bool {
+        guard let url else { return false }
+        return url == ancestor || url.path.hasPrefix(ancestor.path + "/")
     }
 
     /// Move a file or folder into `folder`. No-op for invalid moves.
