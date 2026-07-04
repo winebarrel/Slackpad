@@ -7,6 +7,10 @@ struct EditorView: View {
     let settings: AppSettings
     @State private var draft = ""
     @State private var fieldEmpty = true
+    @State private var postFieldHeight: CGFloat = 56
+
+    private static let minPostHeight: CGFloat = 44
+    private static let maxPostHeight: CGFloat = 500
 
     var body: some View {
         @Bindable var model = model
@@ -25,7 +29,8 @@ struct EditorView: View {
                     onCursor: { model.updateCursor($0) },
                     onPostSelection: { model.postSelection($0) }
                 )
-                Divider()
+                .frame(maxHeight: .infinity)
+                resizeHandle
                 postBar
             }
         } else {
@@ -35,6 +40,18 @@ struct EditorView: View {
                 description: Text("Pick a note from the list, or press ⌘N to create one")
             )
         }
+    }
+
+    /// Draggable divider that resizes the Slack post field, with an up/down
+    /// resize cursor.
+    private var resizeHandle: some View {
+        ZStack {
+            Divider()
+            ResizeHandle { delta in
+                postFieldHeight = min(max(postFieldHeight + delta, Self.minPostHeight), Self.maxPostHeight)
+            }
+        }
+        .frame(height: 8)
     }
 
     private var postBar: some View {
@@ -57,7 +74,6 @@ struct EditorView: View {
                     onSend: send,
                     onEmptyChange: { fieldEmpty = $0 }
                 )
-                .frame(height: 56)
 
                 if fieldEmpty {
                     Text(placeholder)
@@ -67,6 +83,7 @@ struct EditorView: View {
                         .allowsHitTesting(false)
                 }
             }
+            .frame(height: postFieldHeight)
         }
         .background(.background)
     }
@@ -83,5 +100,48 @@ struct EditorView: View {
         model.post(text)
         draft = ""
         fieldEmpty = true
+    }
+}
+
+/// A thin horizontal drag strip that shows the up/down resize cursor and
+/// reports vertical drag deltas (positive = dragged up).
+private struct ResizeHandle: NSViewRepresentable {
+    var onDrag: (CGFloat) -> Void
+
+    func makeNSView(context _: Context) -> HandleNSView {
+        HandleNSView(onDrag: onDrag)
+    }
+
+    func updateNSView(_ nsView: HandleNSView, context _: Context) {
+        nsView.onDrag = onDrag
+    }
+
+    final class HandleNSView: NSView {
+        var onDrag: (CGFloat) -> Void
+        private var lastLocationY: CGFloat = 0
+
+        init(onDrag: @escaping (CGFloat) -> Void) {
+            self.onDrag = onDrag
+            super.init(frame: .zero)
+        }
+
+        @available(*, unavailable)
+        required init?(coder _: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func resetCursorRects() {
+            addCursorRect(bounds, cursor: .resizeUpDown)
+        }
+
+        override func mouseDown(with event: NSEvent) {
+            lastLocationY = event.locationInWindow.y
+        }
+
+        override func mouseDragged(with event: NSEvent) {
+            let locationY = event.locationInWindow.y
+            onDrag(locationY - lastLocationY) // window coords: up is positive → grow the field
+            lastLocationY = locationY
+        }
     }
 }
