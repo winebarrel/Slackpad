@@ -1,6 +1,10 @@
 import Foundation
 
 /// A node in the sidebar tree: either a folder (with children) or a `.txt` note.
+///
+/// Identity is the URL (stable across reloads), but equality is synthesized
+/// over all stored properties — including `children` — so SwiftUI notices when
+/// a folder's contents change and refreshes that subtree.
 struct NoteNode: Identifiable, Hashable {
     let url: URL
     let isDirectory: Bool
@@ -12,14 +16,6 @@ struct NoteNode: Identifiable, Hashable {
 
     var name: String {
         isDirectory ? url.lastPathComponent : url.deletingPathExtension().lastPathComponent
-    }
-
-    static func == (lhs: NoteNode, rhs: NoteNode) -> Bool {
-        lhs.url == rhs.url
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(url)
     }
 }
 
