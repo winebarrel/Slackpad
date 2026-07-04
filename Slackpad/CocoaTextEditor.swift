@@ -25,6 +25,10 @@ struct CocoaTextEditor: NSViewRepresentable {
         scroll.hasVerticalScroller = true
         scroll.drawsBackground = true
         guard let textView = scroll.documentView as? NSTextView else { return scroll }
+        // Opt into TextKit 1: we edit textStorage directly (link attributes),
+        // which glitches TextKit 2's layout (end of text vanishing until the
+        // next redraw). Accessing layoutManager forces the TextKit 1 fallback.
+        _ = textView.layoutManager
         textView.delegate = context.coordinator
         textView.isRichText = false
         textView.allowsUndo = true
