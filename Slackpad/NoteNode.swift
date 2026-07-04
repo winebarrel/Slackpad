@@ -27,17 +27,15 @@ enum NoteTree {
     }
 
     private static func children(of dir: URL, sortKey: SortKey, ascending: Bool) -> [NoteNode] {
-        let keys: [URLResourceKey] = [.isDirectoryKey, .creationDateKey, .contentModificationDateKey]
         guard let entries = try? FileManager.default.contentsOfDirectory(
             at: dir,
-            includingPropertiesForKeys: keys,
+            includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         ) else { return [] }
 
         var nodes: [NoteNode] = []
         for url in entries {
-            let values = try? url.resourceValues(forKeys: Set(keys))
-            let isDir = values?.isDirectory ?? false
+            let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             if isDir {
                 nodes.append(NoteNode(
                     url: url,
