@@ -43,6 +43,10 @@ struct WindowAccessor: NSViewRepresentable {
             self.key = key
         }
 
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+
         func attach(to window: NSWindow) {
             guard self.window == nil else { return }
             self.window = window
