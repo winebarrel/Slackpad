@@ -78,8 +78,11 @@ extension AppModel {
             if let last = settings.lastOpenNote, isSelfOrAncestor(url, of: URL(fileURLWithPath: last)) {
                 settings.lastOpenNote = nil
             }
+            // Drop expansion state for the deleted folder and its descendants.
+            expanded = expanded.filter { !isSelfOrAncestor(url, of: $0) }
             try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
         }
+        settings.expandedFolders = expanded.map(\.path)
         selection = nil
         reloadTree()
     }

@@ -10,6 +10,9 @@ struct SlackClient {
     }
 
     func post(text: String, webhook: URL) async throws {
+        guard webhook.scheme == "https" else {
+            throw PostError(message: "Webhook URL must be https")
+        }
         var request = URLRequest(url: webhook)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
