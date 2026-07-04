@@ -33,7 +33,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         textView.linkTextAttributes = [
             .foregroundColor: NSColor.linkColor,
             .cursor: NSCursor.pointingHand,
-            .underlineStyle: NSUnderlineStyle.single.rawValue
+            .underlineStyle: NSUnderlineStyle.single.rawValue,
         ]
         textView.string = text
         Self.applyLinks(textView)
@@ -98,7 +98,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         }
     }
 
-    // Only used on the main thread.
+    /// Only used on the main thread.
     final class Coordinator: NSObject, NSTextViewDelegate, @unchecked Sendable {
         var parent: CocoaTextEditor
         var lastScroll = 0
@@ -122,7 +122,7 @@ struct CocoaTextEditor: NSViewRepresentable {
             linkToken += 1
             let token = linkToken
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-                guard let self, self.linkToken == token, let textView = self.editedTextView else { return }
+                guard let self, linkToken == token, let textView = editedTextView else { return }
                 CocoaTextEditor.applyLinks(textView)
             }
         }

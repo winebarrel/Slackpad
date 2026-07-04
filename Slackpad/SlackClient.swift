@@ -31,9 +31,9 @@ struct SlackClient {
 /// Follows redirects only when they stay on https.
 private final class HTTPSRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        willPerformHTTPRedirection response: HTTPURLResponse,
+        _: URLSession,
+        task _: URLSessionTask,
+        willPerformHTTPRedirection _: HTTPURLResponse,
         newRequest request: URLRequest
     ) async -> URLRequest? {
         request.url?.scheme == "https" ? request : nil

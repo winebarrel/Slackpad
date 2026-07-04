@@ -12,18 +12,18 @@ enum PostTimestamp: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .time: return "Time"
-        case .dateTime: return "Date & time"
-        case .none: return "None"
+        case .time: "Time"
+        case .dateTime: "Date & time"
+        case .none: "None"
         }
     }
 
     /// DateFormatter pattern, or nil for no timestamp.
     var format: String? {
         switch self {
-        case .time: return "HH:mm"
-        case .dateTime: return "yyyy-MM-dd HH:mm"
-        case .none: return nil
+        case .time: "HH:mm"
+        case .dateTime: "yyyy-MM-dd HH:mm"
+        case .none: nil
         }
     }
 }
@@ -39,8 +39,8 @@ enum SortKey: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .created: return "Date Created"
-        case .name: return "Name"
+        case .created: "Date Created"
+        case .name: "Name"
         }
     }
 }
@@ -72,7 +72,7 @@ final class AppSettings {
             Key.sortKey: SortKey.created.rawValue,
             Key.sortAscending: false,
             Key.sidebarVisible: true,
-            Key.postTimestamp: PostTimestamp.time.rawValue
+            Key.postTimestamp: PostTimestamp.time.rawValue,
         ])
     }
 

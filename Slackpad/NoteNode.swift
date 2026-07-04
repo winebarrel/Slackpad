@@ -53,7 +53,7 @@ enum NoteTree {
 
     /// Folders always come before notes; within each group apply the chosen order.
     private static func sorted(_ nodes: [NoteNode], sortKey: SortKey, ascending: Bool) -> [NoteNode] {
-        let folders = nodes.filter { $0.isDirectory }
+        let folders = nodes.filter(\.isDirectory)
         let files = nodes.filter { !$0.isDirectory }
         return order(folders, sortKey: sortKey, ascending: ascending)
             + order(files, sortKey: sortKey, ascending: ascending)
@@ -63,9 +63,9 @@ enum NoteTree {
         let sorted = nodes.sorted { lhs, rhs in
             switch sortKey {
             case .name:
-                return lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
+                lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
             case .created:
-                return date(lhs.url, .creationDateKey) < date(rhs.url, .creationDateKey)
+                date(lhs.url, .creationDateKey) < date(rhs.url, .creationDateKey)
             }
         }
         return ascending ? sorted : sorted.reversed()

@@ -1,6 +1,14 @@
 APP_NAME  = Slackpad
 BUILD_LOG = ./build.log
 
+.PHONY: format
+format:
+	swiftformat $(APP_NAME)
+
+.PHONY: format-lint
+format-lint:
+	swiftformat --lint $(APP_NAME)
+
 .PHONY: lint
 lint:
 	swiftlint lint --strict

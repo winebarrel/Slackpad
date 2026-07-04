@@ -14,7 +14,7 @@ struct SettingsView: View {
             Section("Slack") {
                 TextField("Webhook URL", text: $settings.webhookURL, prompt: Text("https://hooks.slack.com/services/..."))
                     .textFieldStyle(.roundedBorder)
-                if !settings.webhookURL.isEmpty && !settings.isWebhookConfigured {
+                if !settings.webhookURL.isEmpty, !settings.isWebhookConfigured {
                     Text("Enter a URL starting with https://")
                         .font(.caption)
                         .foregroundStyle(.red)

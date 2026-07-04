@@ -158,7 +158,7 @@ private struct NodeRow: View {
     }
 
     @ViewBuilder private var menu: some View {
-        if selection.count > 1 && selection.contains(node.url) {
+        if selection.count > 1, selection.contains(node.url) {
             // Multi-selection: only deletion is offered.
             Button("Move to Trash", role: .destructive, action: deleteSelection)
         } else {

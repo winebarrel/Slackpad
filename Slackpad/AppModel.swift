@@ -14,7 +14,7 @@ final class AppModel {
     var selection: URL?
     var sidebarVisible: Bool = true
 
-    // Editor
+    /// Editor
     var editorText: String = ""
     // Managed by the model; views only read it.
     var openNoteURL: URL?
@@ -261,10 +261,10 @@ final class AppModel {
                 guard let webhook else { throw SlackClient.PostError(message: "Webhook URL not set") }
                 try await SlackClient().post(text: text, webhook: webhook)
             } catch {
-                self.postError = "Failed to send: \(error.localizedDescription)"
-                self.scheduleErrorClear()
+                postError = "Failed to send: \(error.localizedDescription)"
+                scheduleErrorClear()
             }
-            self.isSending = false
+            isSending = false
         }
     }
 

@@ -20,7 +20,7 @@ struct WindowAccessor: NSViewRepresentable {
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_: NSView, context _: Context) {}
 
     /// NSView that reports its window as soon as it is attached, which happens
     /// before the window is ordered on screen.
@@ -52,13 +52,13 @@ struct WindowAccessor: NSViewRepresentable {
             restore()
             Task { @MainActor [weak self] in
                 guard let self, let window = self.window else { return }
-                self.restore() // re-apply after SwiftUI centers
+                restore() // re-apply after SwiftUI centers
                 window.alphaValue = 1 // reveal at the restored frame
                 // Register observers only now, after the centering, so the
                 // transient center() move doesn't overwrite the saved position.
                 let center = NotificationCenter.default
-                center.addObserver(self, selector: #selector(self.save), name: NSWindow.didMoveNotification, object: window)
-                center.addObserver(self, selector: #selector(self.save), name: NSWindow.didEndLiveResizeNotification, object: window)
+                center.addObserver(self, selector: #selector(save), name: NSWindow.didMoveNotification, object: window)
+                center.addObserver(self, selector: #selector(save), name: NSWindow.didEndLiveResizeNotification, object: window)
             }
         }
 
