@@ -11,8 +11,10 @@ struct CocoaTextEditor: NSViewRepresentable {
     var restoreToken: Int
     var selectFirstLineToken: Int
     var focusToken: Int
+    var canPostSelection: Bool
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
+    var onPostSelection: (String) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -112,6 +114,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         var lastFocus = 0
         var isProgrammatic = false
         private weak var editedTextView: NSTextView?
+        private weak var menuTextView: NSTextView?
         private var linkToken = 0
 
         init(_ parent: CocoaTextEditor) {
@@ -136,6 +139,23 @@ struct CocoaTextEditor: NSViewRepresentable {
         func textViewDidChangeSelection(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.onCursor(textView.selectedRange().location)
+        }
+
+        func textView(_ view: NSTextView, menu: NSMenu, for _: NSEvent, at _: Int) -> NSMenu? {
+            guard parent.canPostSelection, view.selectedRange().length > 0 else { return menu }
+            menuTextView = view
+            let item = NSMenuItem(title: "Post Selection to Slack", action: #selector(postSelection(_:)), keyEquivalent: "")
+            item.target = self
+            menu.insertItem(item, at: 0)
+            menu.insertItem(.separator(), at: 1)
+            return menu
+        }
+
+        @objc private func postSelection(_: Any?) {
+            guard let textView = menuTextView else { return }
+            let range = textView.selectedRange()
+            guard range.length > 0 else { return }
+            parent.onPostSelection((textView.string as NSString).substring(with: range))
         }
     }
 }

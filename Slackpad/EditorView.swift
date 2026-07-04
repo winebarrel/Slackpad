@@ -20,8 +20,10 @@ struct EditorView: View {
                     restoreToken: model.restoreToken,
                     selectFirstLineToken: model.selectFirstLineToken,
                     focusToken: model.focusEditorToken,
+                    canPostSelection: settings.isWebhookConfigured,
                     onEdit: { model.scheduleSave() },
-                    onCursor: { model.updateCursor($0) }
+                    onCursor: { model.updateCursor($0) },
+                    onPostSelection: { model.postSelection($0) }
                 )
                 Divider()
                 postBar

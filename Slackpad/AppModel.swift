@@ -262,13 +262,25 @@ final class AppModel {
 
     // MARK: Posting
 
+    /// Post from the input field: send to Slack and append to the note body.
     func post(_ raw: String) {
         guard isEditorActive else { return }
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isSending else { return }
+        appendToBody(text)
+        sendToSlack(text)
+    }
+
+    /// Post the editor's selected text to Slack only (no body append).
+    func postSelection(_ raw: String) {
+        let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, !isSending else { return }
+        sendToSlack(text)
+    }
+
+    private func sendToSlack(_ text: String) {
         isSending = true
         postError = nil
-        appendToBody(text)
         let webhook = settings.webhookURLValue
         Task { [weak self] in
             guard let self else { return }
