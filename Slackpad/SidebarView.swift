@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Left pane: folders and notes in a single tree. Folders nest and their
 /// expansion state is persisted. Notes drag into folders to move. Selecting a
-/// row and pressing Return (or right-click > 名前を変更) renames it inline.
+/// row and pressing Return (or right-click > Rename) renames it inline.
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
     // Local selection so the List writes to @State rather than to the shared

@@ -14,32 +14,40 @@ struct EditorView: View {
 
     var body: some View {
         @Bindable var model = model
-        if model.isEditorActive {
-            VStack(spacing: 0) {
-                CocoaTextEditor(
-                    text: $model.editorText,
-                    font: settings.editorFont,
-                    scrollToBottomToken: model.scrollToBottomToken,
-                    restoreCursor: model.restoreCursor,
-                    restoreToken: model.restoreToken,
-                    selectFirstLineToken: model.selectFirstLineToken,
-                    focusToken: model.focusEditorToken,
-                    canPostSelection: settings.isWebhookConfigured,
-                    onEdit: { model.scheduleSave() },
-                    onCursor: { model.updateCursor($0) },
-                    onPostSelection: { model.postSelection($0) },
-                    onFocus: { model.editorFocused() }
+        Group {
+            if model.isEditorActive {
+                VStack(spacing: 0) {
+                    CocoaTextEditor(
+                        text: $model.editorText,
+                        font: settings.editorFont,
+                        scrollToBottomToken: model.scrollToBottomToken,
+                        restoreCursor: model.restoreCursor,
+                        restoreToken: model.restoreToken,
+                        selectFirstLineToken: model.selectFirstLineToken,
+                        focusToken: model.focusEditorToken,
+                        canPostSelection: settings.isWebhookConfigured,
+                        onEdit: { model.scheduleSave() },
+                        onCursor: { model.updateCursor($0) },
+                        onPostSelection: { model.postSelection($0) },
+                        onFocus: { model.editorFocused() }
+                    )
+                    .frame(maxHeight: .infinity)
+                    resizeHandle
+                    postBar
+                }
+            } else {
+                ContentUnavailableView(
+                    "Select a Note",
+                    systemImage: "doc.text",
+                    description: Text("Pick a note from the list, or press ⌘N to create one")
                 )
-                .frame(maxHeight: .infinity)
-                resizeHandle
-                postBar
             }
-        } else {
-            ContentUnavailableView(
-                "Select a Note",
-                systemImage: "doc.text",
-                description: Text("Pick a note from the list, or press ⌘N to create one")
-            )
+        }
+        // A draft belongs to the note it was typed in; drop it when the open
+        // note changes (or the editor closes) so it can't post to another note.
+        .onChange(of: model.openNoteURL) { _, _ in
+            draft = ""
+            fieldEmpty = true
         }
     }
 
