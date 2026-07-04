@@ -13,14 +13,30 @@ extension AppModel {
 
     // MARK: Create
 
+    /// Expand `dir` (and its ancestors) so a newly created item inside it is
+    /// visible in the sidebar.
+    private func revealFolder(_ dir: URL) {
+        guard let root = rootURL else { return }
+        var current = dir
+        while current != root, current.path.hasPrefix(root.path) {
+            expanded.insert(current)
+            let parent = current.deletingLastPathComponent()
+            if parent == current { break }
+            current = parent
+        }
+        settings.expandedFolders = expanded.map(\.path)
+    }
+
     /// Create an "Untitled" note file immediately and open it, with the first
     /// line ("Untitled") selected so typing replaces it (Finder-style).
     /// `folder` overrides the target (e.g. the root from the empty-area menu).
     func newNote(in folder: URL? = nil) {
         guard rootURL != nil else { return }
         flush()
-        let url = Filename.uniqueURL(dir: folder ?? targetFolder(), base: Self.untitled)
+        let dir = folder ?? targetFolder()
+        let url = Filename.uniqueURL(dir: dir, base: Self.untitled)
         try? Self.untitled.data(using: .utf8)?.write(to: url, options: .atomic)
+        revealFolder(dir)
         reloadTree()
         selection = url
         openNote(url)
@@ -38,12 +54,18 @@ extension AppModel {
             suffix += 1
         }
         try? FileManager.default.createDirectory(at: candidate, withIntermediateDirectories: false)
+        revealFolder(dir)
         reloadTree()
+        // Select the new folder so the List renders it immediately (and it's
+        // ready to rename).
+        selection = candidate
     }
 
     // MARK: Delete / move
 
-    func delete(_ url: URL) { deleteAll([url]) }
+    func delete(_ url: URL) {
+        deleteAll([url])
+    }
 
     /// Move one or more files/folders to the Trash.
     func deleteAll(_ urls: some Collection<URL>) {
