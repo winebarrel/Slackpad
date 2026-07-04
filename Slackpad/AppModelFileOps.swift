@@ -18,7 +18,7 @@ extension AppModel {
     private func revealFolder(_ dir: URL) {
         guard let root = rootURL else { return }
         var current = dir
-        while current != root, current.path.hasPrefix(root.path) {
+        while current != root, current.path.hasPrefix(root.path + "/") {
             expanded.insert(current)
             let parent = current.deletingLastPathComponent()
             if parent == current { break }

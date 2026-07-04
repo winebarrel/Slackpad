@@ -52,6 +52,10 @@ final class AppModel {
             formatter = cached
         } else {
             formatter = DateFormatter()
+            // Fixed formats need a stable locale/calendar, or a non-Gregorian
+            // calendar / non-POSIX locale would skew the appended timestamp.
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.calendar = Calendar(identifier: .gregorian)
             formatter.dateFormat = format
             dateFormatters[format] = formatter
         }

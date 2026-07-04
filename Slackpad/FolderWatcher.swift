@@ -40,9 +40,15 @@ final class FolderWatcher: @unchecked Sendable {
             0.5,
             flags
         ) else { return }
-        self.stream = stream
         FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
-        FSEventStreamStart(stream)
+        // If the stream fails to start, don't keep an invalid reference around
+        // (it would silently watch nothing and leak until the next stop()).
+        guard FSEventStreamStart(stream) else {
+            FSEventStreamInvalidate(stream)
+            FSEventStreamRelease(stream)
+            return
+        }
+        self.stream = stream
     }
 
     func stop() {
