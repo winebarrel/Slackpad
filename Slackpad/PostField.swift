@@ -106,7 +106,11 @@ struct PostField: NSViewRepresentable {
         if textView.string != text,
            textView.window?.firstResponder !== textView || (text.isEmpty && !textView.hasMarkedText())
         {
+            // Setting the string can fire textDidChange synchronously; suppress
+            // the write-back so we don't publish the binding mid view-update.
+            context.coordinator.isProgrammatic = true
             textView.string = text
+            context.coordinator.isProgrammatic = false
         }
         if textView.font != font { textView.font = font }
         textView.enterToSend = enterToSend
@@ -125,12 +129,13 @@ struct PostField: NSViewRepresentable {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: PostField
         var lastFocus = 0
+        var isProgrammatic = false
         init(_ parent: PostField) {
             self.parent = parent
         }
 
         func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
+            guard !isProgrammatic, let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
         }
     }
