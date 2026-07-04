@@ -224,9 +224,10 @@ final class AppModel {
         // Rename to follow the first line, but only when it is non-blank;
         // an empty note keeps its current filename (no cleanup).
         if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let desired = Filename.base(fromBody: text) + ".txt"
-            if current.lastPathComponent != desired {
-                let target = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: text), excluding: current)
+            let target = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: text), excluding: current)
+            // Rename only when the target actually differs, so a collision
+            // suffix (e.g. "Title 2.txt") doesn't trigger a self-move each save.
+            if target != current {
                 // Only follow the rename when the move actually succeeds,
                 // otherwise we'd write to `target` and duplicate the note.
                 if (try? FileManager.default.moveItem(at: current, to: target)) != nil {

@@ -17,6 +17,11 @@ enum Filename {
         let bad = CharacterSet(charactersIn: "/:").union(.controlCharacters)
         var name = String(raw.unicodeScalars.map { bad.contains($0) ? "-" : Character($0) })
         name = name.trimmingCharacters(in: .whitespaces)
+        // A leading dot would make a hidden file that the tree scan skips.
+        while name.hasPrefix(".") {
+            name.removeFirst()
+        }
+        name = name.trimmingCharacters(in: .whitespaces)
         if name.count > maxLength {
             name = String(name.prefix(maxLength)).trimmingCharacters(in: .whitespaces)
         }
@@ -30,7 +35,10 @@ enum Filename {
         var candidate = dir.appendingPathComponent(base).appendingPathExtension("txt")
         var suffix = 2
         while manager.fileExists(atPath: candidate.path), candidate != excluding {
-            candidate = dir.appendingPathComponent("\(base) \(suffix)").appendingPathExtension("txt")
+            // Keep the whole name within maxLength once the " N" suffix is added.
+            let tail = " \(suffix)"
+            let trimmed = String(base.prefix(maxLength - tail.count)).trimmingCharacters(in: .whitespaces)
+            candidate = dir.appendingPathComponent(trimmed + tail).appendingPathExtension("txt")
             suffix += 1
         }
         return candidate
