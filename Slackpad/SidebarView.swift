@@ -30,8 +30,8 @@ struct SidebarView: View {
         .contextMenu {
             // Right-click on empty space: create at the root. Row right-clicks
             // use the row's own menu.
-            Button("新規メモ") { model.newNote(in: model.rootURL) }
-            Button("新規フォルダ") { model.newFolder(in: model.rootURL) }
+            Button("New Note") { model.newNote(in: model.rootURL) }
+            Button("New Folder") { model.newFolder(in: model.rootURL) }
         }
         .onChange(of: selection) { _, value in
             if value != model.selection { model.userSelected(value) }
@@ -137,11 +137,11 @@ private struct NodeRow: View {
     }
 
     @ViewBuilder private var menu: some View {
-        Button("名前を変更") { begin(node.url) }
+        Button("Rename") { begin(node.url) }
         Divider()
-        Button("新規メモ") { model.selection = node.url; model.newNote() }
-        Button("新規フォルダ") { model.selection = node.url; model.newFolder() }
+        Button("New Note") { model.selection = node.url; model.newNote() }
+        Button("New Folder") { model.selection = node.url; model.newFolder() }
         Divider()
-        Button("ゴミ箱に入れる", role: .destructive) { model.delete(node.url) }
+        Button("Move to Trash", role: .destructive) { model.delete(node.url) }
     }
 }

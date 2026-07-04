@@ -10,8 +10,8 @@ enum SortKey: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .created: return "作成日"
-        case .name: return "名前"
+        case .created: return "Date Created"
+        case .name: return "Name"
         }
     }
 }

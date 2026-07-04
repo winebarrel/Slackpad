@@ -38,8 +38,8 @@ enum RootDirectory {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
-        panel.prompt = "選択"
-        panel.message = "メモの保存先フォルダを選択してください"
+        panel.prompt = "Select"
+        panel.message = "Choose a folder to store your notes"
         panel.directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         return panel.runModal() == .OK ? panel.url : nil
     }

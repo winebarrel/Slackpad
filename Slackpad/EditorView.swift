@@ -28,9 +28,9 @@ struct EditorView: View {
             }
         } else {
             ContentUnavailableView(
-                "メモを選択",
+                "Select a Note",
                 systemImage: "doc.text",
-                description: Text("左のリストからメモを選ぶか、⌘N で新規作成")
+                description: Text("Pick a note from the list, or press ⌘N to create one")
             )
         }
     }
@@ -70,8 +70,8 @@ struct EditorView: View {
 
     private var placeholder: String {
         settings.isWebhookConfigured
-            ? "Slackに投稿する文..."
-            : "設定でWebhook URLを入力してください"
+            ? "Message to post to Slack..."
+            : "Enter a Webhook URL in Settings"
     }
 
     private func send() {

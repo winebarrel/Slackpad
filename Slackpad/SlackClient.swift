@@ -15,7 +15,7 @@ struct SlackClient {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw PostError(message: "不正な応答")
+            throw PostError(message: "Invalid response")
         }
         guard (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""

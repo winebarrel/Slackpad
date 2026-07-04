@@ -85,10 +85,10 @@ struct SlackpadApp: App {
         }
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("新規メモ") { model.newNote() }
+                Button("New Note") { model.newNote() }
                     .keyboardShortcut("n", modifiers: .command)
                     .disabled(model.needsRoot)
-                Button("新規フォルダ") { model.newFolder() }
+                Button("New Folder") { model.newFolder() }
                     .keyboardShortcut("n", modifiers: [.command, .shift])
                     .disabled(model.needsRoot)
             }

@@ -16,48 +16,48 @@ struct SettingsView: View {
                 TextField("Webhook URL", text: $settings.webhookURL, prompt: Text("https://hooks.slack.com/services/..."))
                     .textFieldStyle(.roundedBorder)
                 if !settings.webhookURL.isEmpty && !settings.isWebhookConfigured {
-                    Text("https:// で始まる URL を入力してください")
+                    Text("Enter a URL starting with https://")
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
-                Picker("Enter キー", selection: $settings.enterToSend) {
-                    Text("送信（改行は Shift+Enter）").tag(true)
-                    Text("改行（送信は ⌘Enter）").tag(false)
+                Picker("Return key", selection: $settings.enterToSend) {
+                    Text("Send (Shift+Return for newline)").tag(true)
+                    Text("Newline (⌘Return to send)").tag(false)
                 }
             }
 
-            Section("保存先") {
-                LabeledContent("フォルダ") {
-                    Text(model.rootURL?.path ?? "未選択")
+            Section("Location") {
+                LabeledContent("Folder") {
+                    Text(model.rootURL?.path ?? "Not selected")
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
-                Button("変更...") { model.chooseRoot() }
+                Button("Change...") { model.chooseRoot() }
             }
 
-            Section("エディタのフォント") {
-                Picker("フォント", selection: fontSelection) {
-                    Text("システムフォント").tag("")
+            Section("Editor Font") {
+                Picker("Font", selection: fontSelection) {
+                    Text("System Font").tag("")
                     Divider()
                     ForEach(families, id: \.self) { family in
                         Text(family).tag(family)
                     }
                 }
                 Stepper(value: $settings.fontSize, in: 0...48, step: 1) {
-                    Text(settings.fontSize > 0 ? "サイズ: \(Int(settings.fontSize)) pt" : "サイズ: 標準")
+                    Text(settings.fontSize > 0 ? "Size: \(Int(settings.fontSize)) pt" : "Size: Default")
                 }
             }
 
-            Section("メモ一覧の並び") {
-                Picker("並び替え", selection: $settings.sortKey) {
+            Section("Sort Notes") {
+                Picker("Sort by", selection: $settings.sortKey) {
                     ForEach(SortKey.allCases) { key in
                         Text(key.label).tag(key)
                     }
                 }
-                Picker("順序", selection: $settings.sortAscending) {
-                    Text("昇順").tag(true)
-                    Text("降順").tag(false)
+                Picker("Order", selection: $settings.sortAscending) {
+                    Text("Ascending").tag(true)
+                    Text("Descending").tag(false)
                 }
             }
         }

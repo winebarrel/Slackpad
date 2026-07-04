@@ -192,11 +192,11 @@ final class AppModel {
 
     func newFolder(in folder: URL? = nil) {
         let dir = folder ?? targetFolder()
-        var name = "新規フォルダ"
+        var name = "New Folder"
         var candidate = dir.appendingPathComponent(name)
         var n = 2
         while FileManager.default.fileExists(atPath: candidate.path) {
-            name = "新規フォルダ \(n)"
+            name = "New Folder \(n)"
             candidate = dir.appendingPathComponent(name)
             n += 1
         }
@@ -374,10 +374,10 @@ final class AppModel {
         Task { [weak self] in
             guard let self else { return }
             do {
-                guard let webhook else { throw SlackClient.PostError(message: "Webhook URL 未設定") }
+                guard let webhook else { throw SlackClient.PostError(message: "Webhook URL not set") }
                 try await SlackClient().post(text: text, webhook: webhook)
             } catch {
-                self.postError = "送信に失敗しました"
+                self.postError = "Failed to send"
                 self.scheduleErrorClear()
             }
             self.isSending = false

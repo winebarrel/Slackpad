@@ -15,12 +15,12 @@ struct ContentView: View {
                         Button { model.newFolder() } label: {
                             Image(systemName: "folder.badge.plus")
                         }
-                        .help("新規フォルダ")
+                        .help("New Folder")
 
                         Button { model.newNote() } label: {
                             Image(systemName: "square.and.pencil")
                         }
-                        .help("新規メモ (⌘N)")
+                        .help("New Note (⌘N)")
                     }
                 }
         } detail: {

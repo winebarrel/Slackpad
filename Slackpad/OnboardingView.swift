@@ -10,12 +10,12 @@ struct OnboardingView: View {
             Image(systemName: "folder.badge.gearshape")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-            Text("メモの保存先を選択")
+            Text("Choose where to store notes")
                 .font(.title2.bold())
-            Text("メモはこのフォルダに .txt ファイルとして保存されます。\nあとで設定から変更できます。")
+            Text("Notes are stored as .txt files in this folder.\nYou can change this later in Settings.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button("フォルダを選択...") { model.chooseRoot() }
+            Button("Choose Folder...") { model.chooseRoot() }
                 .keyboardShortcut(.defaultAction)
         }
         .padding(40)
