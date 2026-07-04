@@ -1,0 +1,11 @@
+disabled_rules:
+  - line_length
+  - nesting
+  - function_body_length
+  - cyclomatic_complexity
+  - opening_brace
+# Require trailing commas to match SwiftFormat's trailingCommas rule.
+trailing_comma:
+  mandatory_comma: true
+analyzer_rules:
+  - unused_declaration
