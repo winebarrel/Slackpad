@@ -324,6 +324,7 @@ final class AppModel {
     // MARK: Sidebar visibility persistence
 
     func persistSidebarVisible(_ visible: Bool) {
+        sidebarVisible = visible
         settings.sidebarVisible = visible
     }
 }

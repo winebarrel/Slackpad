@@ -13,10 +13,17 @@ enum Filename {
 
     /// Replace characters that are illegal in a filename and clamp the length.
     static func sanitize(_ raw: String) -> String {
-        // "/" and ":" are unusable in macOS filenames; drop control characters too.
-        let bad = CharacterSet(charactersIn: "/:").union(.controlCharacters)
-        var name = String(raw.unicodeScalars.map { bad.contains($0) ? "-" : Character($0) })
-        name = name.trimmingCharacters(in: .whitespaces)
+        // Rebuild via the scalar view so grapheme clusters (emoji ZWJ
+        // sequences, combining marks) survive and the length clamp counts
+        // user-perceived characters. Replace only "/" / ":" (unusable in macOS
+        // filenames) and genuine control characters — not format scalars like
+        // the zero-width joiner, which hold emoji sequences together.
+        var scalars = String.UnicodeScalarView()
+        for scalar in raw.unicodeScalars {
+            let illegal = scalar == "/" || scalar == ":" || scalar.properties.generalCategory == .control
+            scalars.append(illegal ? "-" : scalar)
+        }
+        var name = String(scalars).trimmingCharacters(in: .whitespaces)
         // A leading dot would make a hidden file that the tree scan skips.
         while name.hasPrefix(".") {
             name.removeFirst()
