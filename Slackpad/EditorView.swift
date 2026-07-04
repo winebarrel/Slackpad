@@ -27,7 +27,8 @@ struct EditorView: View {
                     canPostSelection: settings.isWebhookConfigured,
                     onEdit: { model.scheduleSave() },
                     onCursor: { model.updateCursor($0) },
-                    onPostSelection: { model.postSelection($0) }
+                    onPostSelection: { model.postSelection($0) },
+                    onFocus: { model.editorFocused() }
                 )
                 .frame(maxHeight: .infinity)
                 resizeHandle

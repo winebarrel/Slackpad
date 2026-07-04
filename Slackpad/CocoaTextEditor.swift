@@ -1,5 +1,16 @@
 import SwiftUI
 
+/// NSTextView that reports when it gains keyboard focus.
+final class FocusReportingTextView: NSTextView {
+    var onFocus: (() -> Void)?
+
+    override func becomeFirstResponder() -> Bool {
+        let became = super.becomeFirstResponder()
+        if became { onFocus?() }
+        return became
+    }
+}
+
 /// A plain-text editor backed by NSTextView. Gives us programmatic scroll,
 /// focus control and the standard macOS key bindings (emacs-style Ctrl-A/E/K
 /// etc.) for free. The file on disk stays plain `.txt`.
@@ -15,20 +26,30 @@ struct CocoaTextEditor: NSViewRepresentable {
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
     var onPostSelection: (String) -> Void
+    var onFocus: () -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSTextView.scrollableTextView()
+        let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
         scroll.drawsBackground = true
-        guard let textView = scroll.documentView as? NSTextView else { return scroll }
-        // Opt into TextKit 1: we edit textStorage directly (link attributes),
-        // which glitches TextKit 2's layout (end of text vanishing until the
-        // next redraw). Accessing layoutManager forces the TextKit 1 fallback.
-        _ = textView.layoutManager
+        scroll.borderType = .noBorder
+
+        // Build an explicit TextKit 1 stack: we edit textStorage directly (link
+        // attributes), which glitches TextKit 2's layout (end of text vanishing
+        // until the next redraw).
+        let size = scroll.contentSize
+        let container = NSTextContainer(size: NSSize(width: size.width, height: .greatestFiniteMagnitude))
+        container.widthTracksTextView = true
+        let layout = NSLayoutManager()
+        let storage = NSTextStorage()
+        storage.addLayoutManager(layout)
+        layout.addTextContainer(container)
+
+        let textView = FocusReportingTextView(frame: NSRect(origin: .zero, size: size), textContainer: container)
         textView.delegate = context.coordinator
         textView.isRichText = false
         textView.allowsUndo = true
@@ -37,12 +58,19 @@ struct CocoaTextEditor: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         textView.font = font
         textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.autoresizingMask = [.width]
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.linkTextAttributes = [
             .foregroundColor: NSColor.linkColor,
             .cursor: NSCursor.pointingHand,
             .underlineStyle: NSUnderlineStyle.single.rawValue,
         ]
         textView.string = text
+        textView.onFocus = { [weak coordinator = context.coordinator] in coordinator?.parent.onFocus() }
+        scroll.documentView = textView
         Self.applyLinks(textView)
         return scroll
     }

@@ -191,6 +191,13 @@ final class AppModel {
         }
     }
 
+    /// When the editor gains focus, select the open note in the sidebar (e.g.
+    /// after a multi-selection, so the highlight follows the visible note).
+    func editorFocused() {
+        guard let open = openNoteURL, selection != open else { return }
+        selection = open
+    }
+
     // MARK: Autosave
 
     func scheduleSave() {
