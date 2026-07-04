@@ -1,4 +1,22 @@
 import SwiftUI
+import AppKit
+
+/// Persists the window's position and size across launches by giving its
+/// NSWindow a frame autosave name (AppKit stores the frame in UserDefaults).
+struct WindowAccessor: NSViewRepresentable {
+    let name: String
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        // The view has no window yet in makeNSView; defer until it is attached.
+        DispatchQueue.main.async {
+            view.window?.setFrameAutosaveName(name)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
 
 @main
 struct SlackpadApp: App {
@@ -10,6 +28,7 @@ struct SlackpadApp: App {
                 .environment(model)
                 .environment(model.settings)
                 .frame(minWidth: 640, minHeight: 420)
+                .background(WindowAccessor(name: "SlackpadMainWindow"))
         }
         .commands {
             CommandGroup(replacing: .newItem) {
