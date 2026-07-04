@@ -16,7 +16,6 @@ struct EditorView: View {
                     text: $model.editorText,
                     font: settings.editorFont,
                     scrollToBottomToken: model.scrollToBottomToken,
-                    focusToken: model.focusToken,
                     restoreCursor: model.restoreCursor,
                     restoreToken: model.restoreToken,
                     selectFirstLineToken: model.selectFirstLineToken,

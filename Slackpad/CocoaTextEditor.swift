@@ -8,7 +8,6 @@ struct CocoaTextEditor: NSViewRepresentable {
     @Binding var text: String
     var font: NSFont
     var scrollToBottomToken: Int
-    var focusToken: Int
     var restoreCursor: Int
     var restoreToken: Int
     var selectFirstLineToken: Int
@@ -51,10 +50,6 @@ struct CocoaTextEditor: NSViewRepresentable {
             coord.lastScroll = scrollToBottomToken
             DispatchQueue.main.async { tv.scrollToEndOfDocument(nil) }
         }
-        if coord.lastFocus != focusToken {
-            coord.lastFocus = focusToken
-            DispatchQueue.main.async { tv.window?.makeFirstResponder(tv) }
-        }
         if coord.lastRestore != restoreToken {
             coord.lastRestore = restoreToken
             let offset = min(max(restoreCursor, 0), (tv.string as NSString).length)
@@ -78,7 +73,6 @@ struct CocoaTextEditor: NSViewRepresentable {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: CocoaTextEditor
         var lastScroll = 0
-        var lastFocus = 0
         var lastRestore = 0
         var lastSelectFirstLine = 0
         var isProgrammatic = false

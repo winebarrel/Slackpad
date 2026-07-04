@@ -22,7 +22,6 @@ final class AppModel {
     @ObservationIgnored private var currentCursor: Int = 0
 
     // View triggers (incremented to signal the Cocoa editor)
-    var focusToken: Int = 0
     var scrollToBottomToken: Int = 0
     var restoreCursor: Int = 0
     var restoreToken: Int = 0
@@ -157,7 +156,9 @@ final class AppModel {
         openNoteURL = url
         currentCursor = 0
         settings.lastOpenNote = url.path
-        focusToken += 1
+        // Don't move focus to the editor: selecting a note in the sidebar
+        // should keep keyboard focus there. New notes focus the editor via
+        // selectFirstLineToken instead.
     }
 
     private func clearEditor() {
