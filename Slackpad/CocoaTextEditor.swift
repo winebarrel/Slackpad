@@ -155,7 +155,9 @@ struct CocoaTextEditor: NSViewRepresentable {
             return menu
         }
 
-        @objc private func postSelection(_: Any?) {
+        /// Menu actions run on the main thread; @objc methods are otherwise
+        /// nonisolated and can't touch main-actor AppKit APIs under Swift 6.
+        @MainActor @objc private func postSelection(_: Any?) {
             guard let textView = menuTextView else { return }
             let range = textView.selectedRange()
             guard range.length > 0 else { return }
