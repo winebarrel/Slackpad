@@ -44,10 +44,17 @@ final class AppModel {
     @ObservationIgnored private var errorClearTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var didStart = false
+    @ObservationIgnored private var dateFormatters: [String: DateFormatter] = [:]
 
-    private static func timestamp(format: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = format
+    private func timestamp(format: String) -> String {
+        let formatter: DateFormatter
+        if let cached = dateFormatters[format] {
+            formatter = cached
+        } else {
+            formatter = DateFormatter()
+            formatter.dateFormat = format
+            dateFormatters[format] = formatter
+        }
         return formatter.string(from: Date())
     }
 
@@ -306,7 +313,7 @@ final class AppModel {
     private func appendToBody(_ text: String) {
         let block: String
         if let format = settings.postTimestamp.format {
-            let stamp = Self.timestamp(format: format)
+            let stamp = timestamp(format: format)
             let lines = text.components(separatedBy: "\n")
             let first = "\(stamp) \(lines[0])"
             block = ([first] + lines.dropFirst()).joined(separator: "\n")

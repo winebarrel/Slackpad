@@ -114,7 +114,11 @@ struct PostField: NSViewRepresentable {
         textView.isSelectable = isEnabled
         if context.coordinator.lastFocus != focusToken {
             context.coordinator.lastFocus = focusToken
-            DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
+            // Don't focus a disabled field (no webhook), or ⌘L would land on a
+            // non-editable control.
+            if isEnabled {
+                DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
+            }
         }
     }
 

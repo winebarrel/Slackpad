@@ -60,15 +60,16 @@ enum NoteTree {
     }
 
     private static func order(_ nodes: [NoteNode], sortKey: SortKey, ascending: Bool) -> [NoteNode] {
-        let sorted = nodes.sorted { lhs, rhs in
-            switch sortKey {
-            case .name:
-                lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
-            case .created:
-                date(lhs.url, .creationDateKey) < date(rhs.url, .creationDateKey)
-            }
+        let sorted: [NoteNode]
+        switch sortKey {
+        case .name:
+            sorted = nodes.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .created:
+            // Read each creation date once, not on every comparison.
+            let dates = Dictionary(uniqueKeysWithValues: nodes.map { ($0.url, date($0.url, .creationDateKey)) })
+            sorted = nodes.sorted { (dates[$0.url] ?? .distantPast) < (dates[$1.url] ?? .distantPast) }
         }
-        return ascending ? sorted : sorted.reversed()
+        return ascending ? sorted : Array(sorted.reversed())
     }
 
     private static func date(_ url: URL, _ key: URLResourceKey) -> Date {
