@@ -37,14 +37,16 @@ struct SidebarView: View {
             Button("New Folder") { model.newFolder(in: model.rootURL) }
         }
         .onChange(of: selection) { _, value in
-            // Open a note only for a single selection; multi-select is for
-            // deletion, so it just closes the editor.
+            // Open the note only for a single selection; a multi-selection
+            // clears the model's current-note context (the editor stays open).
             let single = value.count == 1 ? value.first : nil
             if single != model.selection { model.userSelected(single) }
         }
         .onChange(of: model.selection) { _, value in
-            let asSet = value.map { Set([$0]) } ?? []
-            if selection.count <= 1, selection != asSet { selection = asSet }
+            // Sync only on a real programmatic selection (⌘N, rename, restore):
+            // collapse to that single item. A nil (the multi-select echo or a
+            // delete) is ignored so it doesn't clear an active multi-selection.
+            if let value, selection != [value] { selection = [value] }
         }
         .onAppear { selection = model.selection.map { Set([$0]) } ?? [] }
         .onDeleteCommand { model.deleteAll(selection) }
