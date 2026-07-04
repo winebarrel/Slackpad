@@ -77,8 +77,8 @@ final class AppSettings {
 
     var webhookURLValue: URL? {
         let trimmed = webhookURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let url = URL(string: trimmed),
-              url.scheme == "https" || url.scheme == "http" else { return nil }
+        // Slack Incoming Webhooks are always https; reject plaintext.
+        guard !trimmed.isEmpty, let url = URL(string: trimmed), url.scheme == "https" else { return nil }
         return url
     }
 

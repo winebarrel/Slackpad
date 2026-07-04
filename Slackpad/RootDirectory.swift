@@ -5,9 +5,10 @@ import AppKit
 /// app-scope bookmark, so the sandboxed app can reach the user-chosen folder
 /// across launches.
 enum RootDirectory {
-    /// Resolve the saved bookmark and begin security-scoped access.
-    /// Returns nil if there is no bookmark or it can no longer be resolved.
-    static func resolve(from bookmark: Data?) -> URL? {
+    /// Resolve the saved bookmark and begin security-scoped access. Returns the
+    /// folder and whether the bookmark was stale (the caller should regenerate
+    /// and persist a fresh bookmark in that case). Nil if it can't be resolved.
+    static func resolve(from bookmark: Data?) -> (url: URL, isStale: Bool)? {
         guard let bookmark else { return nil }
         var stale = false
         guard let url = try? URL(
@@ -17,7 +18,7 @@ enum RootDirectory {
             bookmarkDataIsStale: &stale
         ) else { return nil }
         guard url.startAccessingSecurityScopedResource() else { return nil }
-        return url
+        return (url, stale)
     }
 
     /// Create bookmark data for a folder the user just picked.

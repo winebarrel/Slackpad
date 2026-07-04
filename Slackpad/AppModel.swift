@@ -63,8 +63,9 @@ final class AppModel {
     func start() {
         settings.load()
         sidebarVisible = settings.sidebarVisible
-        if let root = RootDirectory.resolve(from: settings.rootBookmark) {
-            setRoot(root, persistBookmark: false)
+        if let resolved = RootDirectory.resolve(from: settings.rootBookmark) {
+            // Regenerate and persist the bookmark when it has gone stale.
+            setRoot(resolved.url, persistBookmark: resolved.isStale)
         }
     }
 
