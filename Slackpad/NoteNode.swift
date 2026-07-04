@@ -56,12 +56,12 @@ enum NoteTree {
     }
 
     private static func order(_ nodes: [NoteNode], sortKey: SortKey, ascending: Bool) -> [NoteNode] {
-        let sorted = nodes.sorted { a, b in
+        let sorted = nodes.sorted { lhs, rhs in
             switch sortKey {
             case .name:
-                return a.name.localizedStandardCompare(b.name) == .orderedAscending
+                return lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
             case .created:
-                return date(a.url, .creationDateKey) < date(b.url, .creationDateKey)
+                return date(lhs.url, .creationDateKey) < date(rhs.url, .creationDateKey)
             }
         }
         return ascending ? sorted : sorted.reversed()

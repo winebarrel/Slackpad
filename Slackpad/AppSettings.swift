@@ -67,7 +67,7 @@ final class AppSettings {
             Key.sortKey: SortKey.created.rawValue,
             Key.sortAscending: false,
             Key.sidebarVisible: true,
-            Key.postTimestamp: PostTimestamp.time.rawValue,
+            Key.postTimestamp: PostTimestamp.time.rawValue
         ])
     }
 
@@ -98,8 +98,8 @@ final class AppSettings {
     /// The editor font. Falls back to the system font when unset.
     var editorFont: NSFont {
         let size = fontSize > 0 ? CGFloat(fontSize) : NSFont.systemFontSize
-        if let name = fontName, let f = NSFont(name: name, size: size) {
-            return f
+        if let name = fontName, let named = NSFont(name: name, size: size) {
+            return named
         }
         return NSFont.systemFont(ofSize: size)
     }

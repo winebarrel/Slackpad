@@ -6,69 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		36B5B15FA44C125EA0DB5C29 /* NoteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8059FAC89233DEC05B5A0F6 /* NoteNode.swift */; };
-		4633BDB1EFE318B7D7A17AFA /* Filename.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2108F1087CBFF3904FC2E1EC /* Filename.swift */; };
-		4D4CACE8A3A41A3B2290628C /* CocoaTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3096F07C097E552BED10F4 /* CocoaTextEditor.swift */; };
-		54DDE0ED78A9A41042D78778 /* SlackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11B7BB67F58D3F02E263F33 /* SlackClient.swift */; };
-		5FACC468D5FDC96EB469B1BF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476F1E9C70CB8659730E0035 /* ContentView.swift */; };
-		63E3B845A9C197BF375D09EF /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D36D797D48B6E0CE1FB5BA /* SidebarView.swift */; };
-		66231AAE070B2DDE7367E1F7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C67C583BF8070E13C6803BF /* SettingsView.swift */; };
-		8932CA30904988C8E068E093 /* PostField.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64690B9CAC40075C867C2DA /* PostField.swift */; };
-		8F9CB64DF34D5C78A025E534 /* FolderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48F644CBB4CF9F6CA512212 /* FolderWatcher.swift */; };
-		A8079307B01C8A2B47570288 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1B4213FBFA66B550E0031836 /* Assets.xcassets */; };
-		ACA43C649EE0A3E42B54EB38 /* RootDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7D987B8286C3E7F5934E98E /* RootDirectory.swift */; };
-		BA91B205DA38DCC56B2FB33F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4260AD307A8529B778943D0 /* AppModel.swift */; };
-		BBC2DFF68CBDE0CF2A1AADB7 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EFF22BDC934A96FE94B8761 /* OnboardingView.swift */; };
-		CE1E55E7C117A9C91A97248B /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BC3F403AB6C4B98FC872D8 /* AppSettings.swift */; };
-		E7AAF49C10D973A3122EE1AD /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA74E70A26B860CA887AA341 /* EditorView.swift */; };
-		F6BFB6C9782BF1886DAFDBDF /* SlackpadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E19503CC2659EC1E450A9CF6 /* SlackpadApp.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
-		1B4213FBFA66B550E0031836 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1C67C583BF8070E13C6803BF /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		20BC3F403AB6C4B98FC872D8 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
-		2108F1087CBFF3904FC2E1EC /* Filename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Filename.swift; sourceTree = "<group>"; };
-		2EFF22BDC934A96FE94B8761 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		476F1E9C70CB8659730E0035 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		5C3096F07C097E552BED10F4 /* CocoaTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CocoaTextEditor.swift; sourceTree = "<group>"; };
-		75D36D797D48B6E0CE1FB5BA /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		7E1C6087A0DA7F6E2D8DC5B1 /* Slackpad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Slackpad.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B64690B9CAC40075C867C2DA /* PostField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostField.swift; sourceTree = "<group>"; };
-		C48F644CBB4CF9F6CA512212 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
-		D8059FAC89233DEC05B5A0F6 /* NoteNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteNode.swift; sourceTree = "<group>"; };
-		E19503CC2659EC1E450A9CF6 /* SlackpadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlackpadApp.swift; sourceTree = "<group>"; };
-		E7D987B8286C3E7F5934E98E /* RootDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDirectory.swift; sourceTree = "<group>"; };
-		EA74E70A26B860CA887AA341 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
-		F11B7BB67F58D3F02E263F33 /* SlackClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlackClient.swift; sourceTree = "<group>"; };
-		F4260AD307A8529B778943D0 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXGroup section */
+/* Begin PBXFileSystemSynchronizedRootGroup section */
 		507C27D9DB57AA15FB91CFC6 /* Slackpad */ = {
-			isa = PBXGroup;
-			children = (
-				F4260AD307A8529B778943D0 /* AppModel.swift */,
-				20BC3F403AB6C4B98FC872D8 /* AppSettings.swift */,
-				1B4213FBFA66B550E0031836 /* Assets.xcassets */,
-				5C3096F07C097E552BED10F4 /* CocoaTextEditor.swift */,
-				476F1E9C70CB8659730E0035 /* ContentView.swift */,
-				EA74E70A26B860CA887AA341 /* EditorView.swift */,
-				2108F1087CBFF3904FC2E1EC /* Filename.swift */,
-				C48F644CBB4CF9F6CA512212 /* FolderWatcher.swift */,
-				D8059FAC89233DEC05B5A0F6 /* NoteNode.swift */,
-				2EFF22BDC934A96FE94B8761 /* OnboardingView.swift */,
-				B64690B9CAC40075C867C2DA /* PostField.swift */,
-				E7D987B8286C3E7F5934E98E /* RootDirectory.swift */,
-				1C67C583BF8070E13C6803BF /* SettingsView.swift */,
-				75D36D797D48B6E0CE1FB5BA /* SidebarView.swift */,
-				F11B7BB67F58D3F02E263F33 /* SlackClient.swift */,
-				E19503CC2659EC1E450A9CF6 /* SlackpadApp.swift */,
-			);
+			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Slackpad;
 			sourceTree = "<group>";
 		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXGroup section */
 		81FD5147F5E4002BE998A793 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -98,6 +48,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				507C27D9DB57AA15FB91CFC6 /* Slackpad */,
 			);
 			name = Slackpad;
 			packageProductDependencies = (
@@ -145,7 +98,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A8079307B01C8A2B47570288 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,21 +108,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BA91B205DA38DCC56B2FB33F /* AppModel.swift in Sources */,
-				CE1E55E7C117A9C91A97248B /* AppSettings.swift in Sources */,
-				4D4CACE8A3A41A3B2290628C /* CocoaTextEditor.swift in Sources */,
-				5FACC468D5FDC96EB469B1BF /* ContentView.swift in Sources */,
-				E7AAF49C10D973A3122EE1AD /* EditorView.swift in Sources */,
-				4633BDB1EFE318B7D7A17AFA /* Filename.swift in Sources */,
-				8F9CB64DF34D5C78A025E534 /* FolderWatcher.swift in Sources */,
-				36B5B15FA44C125EA0DB5C29 /* NoteNode.swift in Sources */,
-				BBC2DFF68CBDE0CF2A1AADB7 /* OnboardingView.swift in Sources */,
-				8932CA30904988C8E068E093 /* PostField.swift in Sources */,
-				ACA43C649EE0A3E42B54EB38 /* RootDirectory.swift in Sources */,
-				66231AAE070B2DDE7367E1F7 /* SettingsView.swift in Sources */,
-				63E3B845A9C197BF375D09EF /* SidebarView.swift in Sources */,
-				54DDE0ED78A9A41042D78778 /* SlackClient.swift in Sources */,
-				F6BFB6C9782BF1886DAFDBDF /* SlackpadApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

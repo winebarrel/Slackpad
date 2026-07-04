@@ -72,43 +72,43 @@ struct PostField: NSViewRepresentable {
         storage.addLayoutManager(layout)
         layout.addTextContainer(container)
 
-        let tv = SendingTextView(frame: NSRect(origin: .zero, size: size), textContainer: container)
-        tv.delegate = context.coordinator
-        tv.isRichText = false
-        tv.allowsUndo = true
-        tv.isAutomaticQuoteSubstitutionEnabled = false
-        tv.isAutomaticDashSubstitutionEnabled = false
-        tv.font = font
-        tv.drawsBackground = false
-        tv.textContainerInset = NSSize(width: 4, height: 6)
-        tv.autoresizingMask = [.width]
-        tv.isVerticallyResizable = true
-        tv.isHorizontallyResizable = false
-        tv.minSize = NSSize(width: 0, height: 0)
-        tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        tv.string = text
-        tv.onSend = { [weak coordinator = context.coordinator] in coordinator?.parent.onSend() }
-        tv.onVisualEmptyChange = { [weak coordinator = context.coordinator] empty in
+        let textView = SendingTextView(frame: NSRect(origin: .zero, size: size), textContainer: container)
+        textView.delegate = context.coordinator
+        textView.isRichText = false
+        textView.allowsUndo = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.font = font
+        textView.drawsBackground = false
+        textView.textContainerInset = NSSize(width: 4, height: 6)
+        textView.autoresizingMask = [.width]
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.string = text
+        textView.onSend = { [weak coordinator = context.coordinator] in coordinator?.parent.onSend() }
+        textView.onVisualEmptyChange = { [weak coordinator = context.coordinator] empty in
             coordinator?.parent.onEmptyChange(empty)
         }
-        scroll.documentView = tv
+        scroll.documentView = textView
         return scroll
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         context.coordinator.parent = self
-        guard let tv = scroll.documentView as? SendingTextView else { return }
+        guard let textView = scroll.documentView as? SendingTextView else { return }
         // Push text into the view only when it isn't being edited, or when
         // clearing to empty with no IME composition in progress. Writing during
         // composition would reset the marked text and drop the first character.
-        if tv.string != text,
-           tv.window?.firstResponder !== tv || (text.isEmpty && !tv.hasMarkedText()) {
-            tv.string = text
+        if textView.string != text,
+           textView.window?.firstResponder !== textView || (text.isEmpty && !textView.hasMarkedText()) {
+            textView.string = text
         }
-        if tv.font != font { tv.font = font }
-        tv.enterToSend = enterToSend
-        tv.isEditable = isEnabled
-        tv.isSelectable = isEnabled
+        if textView.font != font { textView.font = font }
+        textView.enterToSend = enterToSend
+        textView.isEditable = isEnabled
+        textView.isSelectable = isEnabled
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
@@ -116,8 +116,8 @@ struct PostField: NSViewRepresentable {
         init(_ parent: PostField) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
-            guard let tv = notification.object as? NSTextView else { return }
-            parent.text = tv.string
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.text = textView.string
         }
     }
 }

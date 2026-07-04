@@ -18,7 +18,8 @@ final class AppModel {
 
     // Editor
     var editorText: String = ""
-    private(set) var openNoteURL: URL?
+    // Managed by the model; views only read it.
+    var openNoteURL: URL?
     @ObservationIgnored private var currentCursor: Int = 0
 
     // View triggers (incremented to signal the Cocoa editor)
@@ -42,9 +43,9 @@ final class AppModel {
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
 
     private static func timestamp(format: String) -> String {
-        let f = DateFormatter()
-        f.dateFormat = format
-        return f.string(from: Date())
+        let formatter = DateFormatter()
+        formatter.dateFormat = format
+        return formatter.string(from: Date())
     }
 
     // MARK: Lifecycle
@@ -151,7 +152,7 @@ final class AppModel {
         }
     }
 
-    private func openNote(_ url: URL) {
+    func openNote(_ url: URL) {
         editorText = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         openNoteURL = url
         currentCursor = 0
@@ -161,156 +162,9 @@ final class AppModel {
         // selectFirstLineToken instead.
     }
 
-    private func clearEditor() {
+    func clearEditor() {
         openNoteURL = nil
         editorText = ""
-    }
-
-    private func targetFolder() -> URL {
-        if let sel = selection {
-            var isDir: ObjCBool = false
-            FileManager.default.fileExists(atPath: sel.path, isDirectory: &isDir)
-            return isDir.boolValue ? sel : sel.deletingLastPathComponent()
-        }
-        return rootURL ?? FileManager.default.temporaryDirectory
-    }
-
-    // MARK: CRUD
-
-    /// Create an "Untitled" note file immediately and open it, with the first
-    /// line ("Untitled") selected so typing replaces it (Finder-style).
-    /// `folder` overrides the target (e.g. the root from the empty-area menu).
-    func newNote(in folder: URL? = nil) {
-        guard rootURL != nil else { return }
-        flush()
-        let url = Filename.uniqueURL(dir: folder ?? targetFolder(), base: Self.untitled)
-        try? Self.untitled.data(using: .utf8)?.write(to: url, options: .atomic)
-        reloadTree()
-        selection = url
-        openNote(url)
-        selectFirstLineToken += 1
-    }
-
-    func newFolder(in folder: URL? = nil) {
-        let dir = folder ?? targetFolder()
-        var name = "New Folder"
-        var candidate = dir.appendingPathComponent(name)
-        var n = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
-            name = "New Folder \(n)"
-            candidate = dir.appendingPathComponent(name)
-            n += 1
-        }
-        try? FileManager.default.createDirectory(at: candidate, withIntermediateDirectories: false)
-        reloadTree()
-    }
-
-    func delete(_ url: URL) { deleteAll([url]) }
-
-    /// Move one or more files/folders to the Trash.
-    func deleteAll(_ urls: some Collection<URL>) {
-        guard !urls.isEmpty else { return }
-        var closedOpen = false
-        for url in urls {
-            if url == openNoteURL { closedOpen = true }
-            try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
-        }
-        if closedOpen { clearEditor() }
-        selection = nil
-        reloadTree()
-    }
-
-    /// Move a file or folder into `folder`. No-op for invalid moves.
-    func move(_ src: URL, into folder: URL) {
-        guard src.deletingLastPathComponent() != folder else { return }
-        guard !folder.path.hasPrefix(src.path + "/") , folder != src else { return }
-        let dest = folder.appendingPathComponent(src.lastPathComponent)
-        guard !FileManager.default.fileExists(atPath: dest.path) else { return }
-        let wasOpen = src == openNoteURL
-        try? FileManager.default.moveItem(at: src, to: dest)
-        if wasOpen {
-            openNoteURL = dest
-            selection = dest
-            settings.lastOpenNote = dest.path
-        }
-        reloadTree()
-    }
-
-    // MARK: Rename
-
-    /// Rename a sidebar item. Folders rename in place; for a note, renaming
-    /// rewrites its first line (which is the source of truth for its filename).
-    func rename(_ url: URL, to newName: String) {
-        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        var isDir: ObjCBool = false
-        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
-        if isDir.boolValue {
-            renameFolder(url, to: name)
-        } else {
-            renameNote(url, to: name)
-        }
-    }
-
-    private func renameFolder(_ url: URL, to newName: String) {
-        let base = Filename.sanitize(newName)
-        let parent = url.deletingLastPathComponent()
-        var dest = parent.appendingPathComponent(base, isDirectory: true)
-        var n = 2
-        while FileManager.default.fileExists(atPath: dest.path), dest != url {
-            dest = parent.appendingPathComponent("\(base) \(n)", isDirectory: true)
-            n += 1
-        }
-        guard dest != url else { return }
-        guard (try? FileManager.default.moveItem(at: url, to: dest)) != nil else { return }
-        remapPaths(from: url, to: dest)
-        selection = dest
-        reloadTree()
-    }
-
-    private func renameNote(_ url: URL, to newName: String) {
-        if url == openNoteURL {
-            editorText = Self.replacingFirstLine(editorText, with: newName)
-            saveNow() // renames the file to match the new first line
-            return
-        }
-        let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-        let newContent = Self.replacingFirstLine(content, with: newName)
-        let dir = url.deletingLastPathComponent()
-        let dest = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: newContent), excluding: url)
-        try? newContent.data(using: .utf8)?.write(to: url, options: .atomic)
-        if dest != url {
-            try? FileManager.default.moveItem(at: url, to: dest)
-        }
-        if settings.lastOpenNote == url.path { settings.lastOpenNote = dest.path }
-        selection = dest
-        reloadTree()
-    }
-
-    /// Replace the first line of `content`, keeping the rest of the body intact.
-    private static func replacingFirstLine(_ content: String, with first: String) -> String {
-        if let nl = content.firstIndex(of: "\n") {
-            return first + String(content[nl...])
-        }
-        return first
-    }
-
-    /// After moving `oldDir` to `newDir`, fix up any state that pointed inside it.
-    private func remapPaths(from oldDir: URL, to newDir: URL) {
-        func remap(_ u: URL) -> URL? {
-            if u == oldDir { return newDir }
-            let prefix = oldDir.path + "/"
-            guard u.path.hasPrefix(prefix) else { return nil }
-            let suffix = String(u.path.dropFirst(prefix.count))
-            return newDir.appendingPathComponent(suffix)
-        }
-        if let open = openNoteURL, let moved = remap(open) {
-            openNoteURL = moved
-            settings.lastOpenNote = moved.path
-        }
-        if let sel = selection, let moved = remap(sel) { selection = moved }
-        expanded = Set(expanded.map { remap($0) ?? $0 })
-        settings.expandedFolders = expanded.map(\.path)
     }
 
     // MARK: Autosave
@@ -333,7 +187,7 @@ final class AppModel {
     /// file. It must be false when called from `flush()` during a selection
     /// change, otherwise re-writing `selection` re-enters the change handler
     /// and loops ("Publishing changes from within view updates").
-    private func saveNow(reselect: Bool = true) {
+    func saveNow(reselect: Bool = true) {
         saveTask?.cancel()
         guard isEditorActive else { return }
         let text = editorText
@@ -371,7 +225,7 @@ final class AppModel {
 
     /// Persist the current buffer. Called on note switch, resign active and
     /// terminate. Empty notes are kept as-is (no cleanup).
-    private func flush() {
+    func flush() {
         saveTask?.cancel()
         guard isEditorActive else { return }
         saveNow(reselect: false)

@@ -58,7 +58,7 @@ struct SidebarView: View {
         }
         .dropDestination(for: URL.self) { urls, _ in
             guard let root = model.rootURL else { return false }
-            for u in urls { model.move(u, into: root) }
+            for url in urls { model.move(url, into: root) }
             return true
         }
     }
@@ -117,7 +117,7 @@ private struct NodeRow: View {
                 label(system: "folder")
                     .contextMenu { menu }
                     .dropDestination(for: URL.self) { urls, _ in
-                        for u in urls { model.move(u, into: node.url) }
+                        for url in urls { model.move(url, into: node.url) }
                         return true
                     }
             }

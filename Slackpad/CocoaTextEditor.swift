@@ -20,52 +20,52 @@ struct CocoaTextEditor: NSViewRepresentable {
         let scroll = NSTextView.scrollableTextView()
         scroll.hasVerticalScroller = true
         scroll.drawsBackground = true
-        let tv = scroll.documentView as! NSTextView
-        tv.delegate = context.coordinator
-        tv.isRichText = false
-        tv.allowsUndo = true
-        tv.isAutomaticQuoteSubstitutionEnabled = false
-        tv.isAutomaticDashSubstitutionEnabled = false
-        tv.isAutomaticTextReplacementEnabled = false
-        tv.font = font
-        tv.textContainerInset = NSSize(width: 6, height: 8)
-        tv.string = text
+        guard let textView = scroll.documentView as? NSTextView else { return scroll }
+        textView.delegate = context.coordinator
+        textView.isRichText = false
+        textView.allowsUndo = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.font = font
+        textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.string = text
         return scroll
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
-        guard let tv = scroll.documentView as? NSTextView else { return }
-        if tv.string != text {
+        guard let textView = scroll.documentView as? NSTextView else { return }
+        if textView.string != text {
             // Setting the string can fire textDidChange synchronously; suppress
             // the write-back so we don't publish editorText mid view-update
             // ("Publishing changes from within view updates").
             context.coordinator.isProgrammatic = true
-            tv.string = text
+            textView.string = text
             context.coordinator.isProgrammatic = false
         }
-        if tv.font != font { tv.font = font }
+        if textView.font != font { textView.font = font }
 
         let coord = context.coordinator
         if coord.lastScroll != scrollToBottomToken {
             coord.lastScroll = scrollToBottomToken
-            DispatchQueue.main.async { tv.scrollToEndOfDocument(nil) }
+            DispatchQueue.main.async { textView.scrollToEndOfDocument(nil) }
         }
         if coord.lastRestore != restoreToken {
             coord.lastRestore = restoreToken
-            let offset = min(max(restoreCursor, 0), (tv.string as NSString).length)
+            let offset = min(max(restoreCursor, 0), (textView.string as NSString).length)
             DispatchQueue.main.async {
-                tv.setSelectedRange(NSRange(location: offset, length: 0))
-                tv.scrollRangeToVisible(NSRange(location: offset, length: 0))
+                textView.setSelectedRange(NSRange(location: offset, length: 0))
+                textView.scrollRangeToVisible(NSRange(location: offset, length: 0))
             }
         }
         if coord.lastSelectFirstLine != selectFirstLineToken {
             coord.lastSelectFirstLine = selectFirstLineToken
-            let ns = tv.string as NSString
-            let firstLineEnd = ns.range(of: "\n").location
-            let length = firstLineEnd == NSNotFound ? ns.length : firstLineEnd
+            let nsString = textView.string as NSString
+            let firstLineEnd = nsString.range(of: "\n").location
+            let length = firstLineEnd == NSNotFound ? nsString.length : firstLineEnd
             DispatchQueue.main.async {
-                tv.window?.makeFirstResponder(tv)
-                tv.setSelectedRange(NSRange(location: 0, length: length))
+                textView.window?.makeFirstResponder(textView)
+                textView.setSelectedRange(NSRange(location: 0, length: length))
             }
         }
     }
@@ -80,14 +80,14 @@ struct CocoaTextEditor: NSViewRepresentable {
         init(_ parent: CocoaTextEditor) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
-            guard !isProgrammatic, let tv = notification.object as? NSTextView else { return }
-            parent.text = tv.string
+            guard !isProgrammatic, let textView = notification.object as? NSTextView else { return }
+            parent.text = textView.string
             parent.onEdit()
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {
-            guard let tv = notification.object as? NSTextView else { return }
-            parent.onCursor(tv.selectedRange().location)
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.onCursor(textView.selectedRange().location)
         }
     }
 }
