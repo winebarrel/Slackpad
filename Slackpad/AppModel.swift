@@ -254,7 +254,7 @@ final class AppModel {
                 guard let webhook else { throw SlackClient.PostError(message: "Webhook URL not set") }
                 try await SlackClient().post(text: text, webhook: webhook)
             } catch {
-                self.postError = "Failed to send"
+                self.postError = "Failed to send: \(error.localizedDescription)"
                 self.scheduleErrorClear()
             }
             self.isSending = false

@@ -30,7 +30,9 @@ enum RootDirectory {
     }
 
     /// Show a folder-selection panel starting at ~/Documents.
-    /// Returns the chosen folder (already security-scope accessible), or nil if cancelled.
+    /// Returns the chosen folder, or nil if cancelled. A user-selected URL is
+    /// usable for this session; persist a bookmark (`makeBookmark`) to reach it
+    /// again on the next launch (where `resolve` starts security-scoped access).
     @MainActor
     static func pick() -> URL? {
         let panel = NSOpenPanel()

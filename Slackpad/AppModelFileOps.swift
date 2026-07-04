@@ -64,13 +64,10 @@ extension AppModel {
         guard !folder.path.hasPrefix(src.path + "/"), folder != src else { return }
         let dest = folder.appendingPathComponent(src.lastPathComponent)
         guard !FileManager.default.fileExists(atPath: dest.path) else { return }
-        let wasOpen = src == openNoteURL
-        try? FileManager.default.moveItem(at: src, to: dest)
-        if wasOpen {
-            openNoteURL = dest
-            selection = dest
-            settings.lastOpenNote = dest.path
-        }
+        guard (try? FileManager.default.moveItem(at: src, to: dest)) != nil else { return }
+        // Fix up any open note / selection / expansion / last-open path that
+        // pointed at the moved item or inside a moved folder.
+        remapPaths(from: src, to: dest)
         reloadTree()
     }
 
@@ -142,8 +139,10 @@ extension AppModel {
             let relative = String(url.path.dropFirst(prefix.count))
             return newDir.appendingPathComponent(relative)
         }
-        if let open = openNoteURL, let moved = remap(open) {
-            openNoteURL = moved
+        if let open = openNoteURL, let moved = remap(open) { openNoteURL = moved }
+        // Remap the persisted last-open path independently: the editor may be
+        // closed while its note is moved as part of a folder move.
+        if let last = settings.lastOpenNote, let moved = remap(URL(fileURLWithPath: last)) {
             settings.lastOpenNote = moved.path
         }
         if let sel = selection, let moved = remap(sel) { selection = moved }

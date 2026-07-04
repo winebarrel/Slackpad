@@ -64,7 +64,11 @@ struct SidebarView: View {
     }
 
     private func begin(_ url: URL) {
-        renameText = url.deletingPathExtension().lastPathComponent
+        // Folders keep their full name (which may contain dots); only notes
+        // drop the .txt extension.
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        renameText = isDir.boolValue ? url.lastPathComponent : url.deletingPathExtension().lastPathComponent
         renaming = url
         renameFocus = url
     }
