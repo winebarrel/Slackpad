@@ -82,14 +82,17 @@ private struct NodeRow: View {
                     )
                 }
             } label: {
+                // Attach the menu/drop to the label only, not the whole
+                // DisclosureGroup, otherwise its region covers the child rows
+                // and acting on a descendant hits this folder instead.
                 label(system: "folder")
+                    .contextMenu { menu }
+                    .dropDestination(for: URL.self) { urls, _ in
+                        for u in urls { model.move(u, into: node.url) }
+                        return true
+                    }
             }
             .tag(node.url)
-            .contextMenu { menu }
-            .dropDestination(for: URL.self) { urls, _ in
-                for u in urls { model.move(u, into: node.url) }
-                return true
-            }
         } else {
             label(system: "doc.text")
                 .tag(node.url)
