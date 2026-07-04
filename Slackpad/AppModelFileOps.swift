@@ -166,13 +166,15 @@ extension AppModel {
         let newContent = Self.replacingFirstLine(content, with: newName)
         let dir = url.deletingLastPathComponent()
         let dest = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: newContent), excluding: url)
-        // Preserve the creation date (atomic write resets it) and only move the
-        // state to `dest` when the rename actually succeeds.
-        Self.writePreservingCreationDate(newContent.data(using: .utf8) ?? Data(), to: url)
+        // Rename first, then rewrite the body, so a failed move can't leave a
+        // new first line under the old filename (keeps rename all-or-nothing).
         var final = url
-        if dest != url, (try? FileManager.default.moveItem(at: url, to: dest)) != nil {
+        if dest != url {
+            guard (try? FileManager.default.moveItem(at: url, to: dest)) != nil else { return }
             final = dest
         }
+        // Preserve the creation date, which an atomic write would otherwise reset.
+        Self.writePreservingCreationDate(newContent.data(using: .utf8) ?? Data(), to: final)
         if settings.lastOpenNote == url.path { settings.lastOpenNote = final.path }
         selection = final
         reloadTree()
