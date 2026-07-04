@@ -1,45 +1,46 @@
 import SwiftUI
 import AppKit
-import Combine
+import Observation
 
 /// Central coordinator: owns settings, the root directory, the note tree, the
 /// open note / editor buffer, autosave, external-change watching and posting.
 @MainActor
-final class AppModel: ObservableObject {
+@Observable
+final class AppModel {
     let settings = AppSettings()
 
     // Tree / sidebar
-    @Published var rootURL: URL?
-    @Published var tree: [NoteNode] = []
-    @Published var expanded: Set<URL> = []
-    @Published var selection: URL?
-    @Published var sidebarVisible: Bool = true
+    var rootURL: URL?
+    var tree: [NoteNode] = []
+    var expanded: Set<URL> = []
+    var selection: URL?
+    var sidebarVisible: Bool = true
 
     // Editor
-    @Published var editorText: String = ""
-    @Published private(set) var openNoteURL: URL?
-    private var currentCursor: Int = 0
+    var editorText: String = ""
+    private(set) var openNoteURL: URL?
+    @ObservationIgnored private var currentCursor: Int = 0
 
     // View triggers (incremented to signal the Cocoa editor)
-    @Published var focusToken: Int = 0
-    @Published var scrollToBottomToken: Int = 0
-    @Published var restoreCursor: Int = 0
-    @Published var restoreToken: Int = 0
-    @Published var selectFirstLineToken: Int = 0
+    var focusToken: Int = 0
+    var scrollToBottomToken: Int = 0
+    var restoreCursor: Int = 0
+    var restoreToken: Int = 0
+    var selectFirstLineToken: Int = 0
 
     // Posting
-    @Published var isSending: Bool = false
-    @Published var postError: String?
+    var isSending: Bool = false
+    var postError: String?
 
     var isEditorActive: Bool { openNoteURL != nil }
 
     static let untitled = "Untitled"
 
-    private let watcher = FolderWatcher()
-    private var saveTask: Task<Void, Never>?
-    private var rebuildTask: Task<Void, Never>?
-    private var errorClearTask: Task<Void, Never>?
-    private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private let watcher = FolderWatcher()
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+    @ObservationIgnored private var rebuildTask: Task<Void, Never>?
+    @ObservationIgnored private var errorClearTask: Task<Void, Never>?
+    @ObservationIgnored private var observers: [NSObjectProtocol] = []
 
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()

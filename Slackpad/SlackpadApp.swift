@@ -2,13 +2,13 @@ import SwiftUI
 
 @main
 struct SlackpadApp: App {
-    @StateObject private var model = AppModel()
+    @State private var model = AppModel()
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(model)
-                .environmentObject(model.settings)
+                .environment(model)
+                .environment(model.settings)
                 .frame(minWidth: 640, minHeight: 420)
         }
         .commands {
@@ -24,15 +24,15 @@ struct SlackpadApp: App {
 
         Settings {
             SettingsView()
-                .environmentObject(model)
-                .environmentObject(model.settings)
+                .environment(model)
+                .environment(model.settings)
         }
     }
 }
 
 /// Gate: onboarding until a root folder exists, then the main window.
 private struct RootView: View {
-    @EnvironmentObject var model: AppModel
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         Group {

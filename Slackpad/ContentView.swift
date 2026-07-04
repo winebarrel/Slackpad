@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The main two-pane window: collapsible sidebar tree + editor/post pane.
 struct ContentView: View {
-    @EnvironmentObject var model: AppModel
+    @Environment(AppModel.self) private var model
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {

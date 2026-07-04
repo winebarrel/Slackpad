@@ -1,6 +1,6 @@
 import Foundation
 import AppKit
-import Combine
+import Observation
 
 /// Sort key for the note list.
 enum SortKey: String, CaseIterable, Identifiable {
@@ -17,8 +17,9 @@ enum SortKey: String, CaseIterable, Identifiable {
 }
 
 /// User-facing preferences, backed by UserDefaults.
-final class AppSettings: ObservableObject {
-    private let defaults: UserDefaults
+@Observable
+final class AppSettings {
+    @ObservationIgnored private let defaults: UserDefaults
     private enum Key {
         static let webhookURL = "webhookURL"
         static let enterToSend = "enterToSend"
@@ -46,7 +47,7 @@ final class AppSettings: ObservableObject {
 
     // MARK: Slack
 
-    @Published var webhookURL: String = "" { didSet { defaults.set(webhookURL, forKey: Key.webhookURL) } }
+    var webhookURL: String = "" { didSet { defaults.set(webhookURL, forKey: Key.webhookURL) } }
 
     var webhookURLValue: URL? {
         let trimmed = webhookURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -58,12 +59,12 @@ final class AppSettings: ObservableObject {
     var isWebhookConfigured: Bool { webhookURLValue != nil }
 
     /// true: Enter sends, Shift+Enter newline. false: Enter newline, Cmd+Enter sends.
-    @Published var enterToSend: Bool = true { didSet { defaults.set(enterToSend, forKey: Key.enterToSend) } }
+    var enterToSend: Bool = true { didSet { defaults.set(enterToSend, forKey: Key.enterToSend) } }
 
     // MARK: Editor font
 
-    @Published var fontName: String? { didSet { defaults.set(fontName, forKey: Key.fontName) } }
-    @Published var fontSize: Double = 0 { didSet { defaults.set(fontSize, forKey: Key.fontSize) } }
+    var fontName: String? { didSet { defaults.set(fontName, forKey: Key.fontName) } }
+    var fontSize: Double = 0 { didSet { defaults.set(fontSize, forKey: Key.fontSize) } }
 
     /// The editor font. Falls back to the system font when unset.
     var editorFont: NSFont {
@@ -76,8 +77,8 @@ final class AppSettings: ObservableObject {
 
     // MARK: Sort
 
-    @Published var sortKey: SortKey = .created { didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) } }
-    @Published var sortAscending: Bool = false { didSet { defaults.set(sortAscending, forKey: Key.sortAscending) } }
+    var sortKey: SortKey = .created { didSet { defaults.set(sortKey.rawValue, forKey: Key.sortKey) } }
+    var sortAscending: Bool = false { didSet { defaults.set(sortAscending, forKey: Key.sortAscending) } }
 
     // MARK: Restore state
 
@@ -106,7 +107,7 @@ final class AppSettings: ObservableObject {
         set { defaults.set(newValue, forKey: Key.lastCursor) }
     }
 
-    /// Load @Published mirrors from defaults at launch.
+    /// Load observable properties from defaults at launch.
     func load() {
         webhookURL = defaults.string(forKey: Key.webhookURL) ?? ""
         enterToSend = defaults.bool(forKey: Key.enterToSend)

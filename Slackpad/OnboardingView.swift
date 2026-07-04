@@ -3,7 +3,7 @@ import SwiftUI
 /// Shown until a root folder is chosen. The app cannot store notes without it,
 /// so this keeps prompting until the user picks one.
 struct OnboardingView: View {
-    @EnvironmentObject var model: AppModel
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         VStack(spacing: 16) {

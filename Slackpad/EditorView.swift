@@ -3,11 +3,12 @@ import SwiftUI
 /// Right pane: the note body editor on top, the Slack post field at the bottom.
 /// Shown only when a note is open; otherwise a placeholder.
 struct EditorView: View {
-    @EnvironmentObject var model: AppModel
-    @ObservedObject var settings: AppSettings
+    @Environment(AppModel.self) private var model
+    let settings: AppSettings
     @State private var draft = ""
 
     var body: some View {
+        @Bindable var model = model
         if model.isEditorActive {
             VStack(spacing: 0) {
                 CocoaTextEditor(

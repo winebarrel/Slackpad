@@ -4,12 +4,13 @@ import AppKit
 /// The Settings window (⌘,): Slack webhook, post behaviour, save location,
 /// editor font and note sorting.
 struct SettingsView: View {
-    @EnvironmentObject var model: AppModel
-    @EnvironmentObject var settings: AppSettings
+    @Environment(AppModel.self) private var model
+    @Environment(AppSettings.self) private var settings
 
     private let families = NSFontManager.shared.availableFontFamilies
 
     var body: some View {
+        @Bindable var settings = settings
         Form {
             Section("Slack") {
                 TextField("Webhook URL", text: $settings.webhookURL, prompt: Text("https://hooks.slack.com/services/..."))

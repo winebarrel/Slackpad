@@ -4,10 +4,10 @@ import SwiftUI
 /// expansion state is persisted. Notes drag into folders to move. Selecting a
 /// row and pressing Return (or right-click > 名前を変更) renames it inline.
 struct SidebarView: View {
-    @EnvironmentObject var model: AppModel
+    @Environment(AppModel.self) private var model
     // Local selection so the List writes to @State rather than to the shared
-    // model's @Published, which would publish mid view-update on every click
-    // ("Publishing changes from within view updates"). Synced both ways below.
+    // model's observable state, which would publish mid view-update on every
+    // click ("Publishing changes from within view updates"). Synced both ways.
     @State private var selection: URL?
     @State private var renaming: URL?
     @State private var renameText = ""
@@ -69,7 +69,7 @@ struct SidebarView: View {
 }
 
 private struct NodeRow: View {
-    @EnvironmentObject var model: AppModel
+    @Environment(AppModel.self) private var model
     let node: NoteNode
     @Binding var renaming: URL?
     @Binding var renameText: String
