@@ -1,5 +1,4 @@
 import AppKit
-import Observation
 
 /// Timestamp prepended to a post when it is appended to the note body.
 enum PostTimestamp: String, CaseIterable, Identifiable {

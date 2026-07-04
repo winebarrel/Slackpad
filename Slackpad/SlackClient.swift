@@ -4,7 +4,9 @@ import Foundation
 struct SlackClient {
     struct PostError: LocalizedError {
         let message: String
-        var errorDescription: String? { message }
+        var errorDescription: String? {
+            message
+        }
     }
 
     func post(text: String, webhook: URL) async throws {

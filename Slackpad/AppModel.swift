@@ -1,5 +1,3 @@
-// import Foundation
-import Observation
 import SwiftUI
 
 /// Central coordinator: owns settings, the root directory, the note tree, the
