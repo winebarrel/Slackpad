@@ -24,8 +24,12 @@ final class AppModel {
     var scrollToBottomToken: Int = 0
     var restoreCursor: Int = 0
     var restoreToken: Int = 0
-    var selectFirstLineToken: Int = 0
     var focusEditorToken: Int = 0
+
+    // Signals the sidebar to start inline-renaming `renameTargetURL` (used when
+    // a new note is created so its name is immediately editable).
+    var beginRenameToken: Int = 0
+    var renameTargetURL: URL?
     var focusPostFieldToken: Int = 0
 
     // Posting
@@ -201,13 +205,19 @@ final class AppModel {
         currentCursor = 0
         settings.lastOpenNote = url.path
         // Don't move focus to the editor: selecting a note in the sidebar
-        // should keep keyboard focus there. New notes focus the editor via
-        // selectFirstLineToken instead.
+        // should keep keyboard focus there. New notes start an inline rename in
+        // the sidebar via beginRenameToken instead.
     }
 
     func clearEditor() {
         openNoteURL = nil
         editorText = ""
+    }
+
+    /// The open note's filename (without extension), shown in the window title.
+    /// Falls back to the app name when no note is open.
+    var windowTitle: String {
+        openNoteURL?.deletingPathExtension().lastPathComponent ?? "Slackpad"
     }
 
     // MARK: Autosave
@@ -217,10 +227,7 @@ final class AppModel {
         saveTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(0.6))
             guard !Task.isCancelled else { return }
-            // Don't re-select while the user is typing: renaming to follow the
-            // title would move the sidebar selection and steal keyboard focus
-            // from the editor.
-            self?.saveNow(reselect: false)
+            self?.saveNow()
         }
     }
 
@@ -228,36 +235,15 @@ final class AppModel {
         currentCursor = offset
     }
 
-    /// `reselect` updates the sidebar selection to follow a created/renamed
-    /// file. It must be false when called from `flush()` during a selection
-    /// change, otherwise re-writing `selection` re-enters the change handler
-    /// and loops ("Publishing changes from within view updates").
-    func saveNow(reselect: Bool = true) {
+    /// Persist the editor buffer to the open note's file. The filename is now
+    /// independent of the body (changed via the title bar or sidebar rename),
+    /// so this only writes.
+    func saveNow() {
         saveTask?.cancel()
         guard isEditorActive else { return }
-        let text = editorText
         guard let current = openNoteURL else { return }
-        let data = text.data(using: .utf8) ?? Data()
-        let dir = current.deletingLastPathComponent()
-        var writeURL = current
-        // Rename to follow the first line, but only when it is non-blank;
-        // an empty note keeps its current filename (no cleanup).
-        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let target = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: text), excluding: current)
-            // Rename only when the target actually differs, so a collision
-            // suffix (e.g. "Title 2.txt") doesn't trigger a self-move each save.
-            if target != current {
-                // Only follow the rename when the move actually succeeds,
-                // otherwise we'd write to `target` and duplicate the note.
-                if (try? FileManager.default.moveItem(at: current, to: target)) != nil {
-                    openNoteURL = target
-                    settings.lastOpenNote = target.path
-                    writeURL = target
-                    if reselect, selection != target { selection = target }
-                }
-            }
-        }
-        Self.writePreservingCreationDate(data, to: writeURL)
+        let data = editorText.data(using: .utf8) ?? Data()
+        Self.writePreservingCreationDate(data, to: current)
         settings.lastCursor = currentCursor
     }
 
@@ -277,7 +263,7 @@ final class AppModel {
     func flush() {
         saveTask?.cancel()
         guard isEditorActive else { return }
-        saveNow(reselect: false)
+        saveNow()
     }
 
     // MARK: Posting

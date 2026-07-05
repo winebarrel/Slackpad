@@ -1,15 +1,9 @@
 import Foundation
 
-/// Helpers for turning a note's first line into a safe `.txt` filename.
+/// Helpers for turning a user-entered name into a safe `.txt` filename.
 enum Filename {
     static let maxLength = 64
     static let fallback = "Untitled"
-
-    /// Derive a base filename (without extension) from the note body's first line.
-    static func base(fromBody body: String) -> String {
-        let firstLine = body.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? ""
-        return sanitize(firstLine)
-    }
 
     /// Replace characters that are illegal in a filename and clamp the length.
     static func sanitize(_ raw: String) -> String {
