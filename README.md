@@ -3,9 +3,10 @@
 Slackpad is a macOS note taking app that keeps your notes as plain .txt
 files and posts to Slack as you write.
 
-Notes live in a folder you choose. The sidebar shows that folder as a tree,
-and the first line of each note is its filename. Editing saves
-automatically. Below the editor there is a Slack input. When you send a
+Notes live in a folder you choose. The sidebar shows that folder as a tree.
+Editing saves automatically. The window title shows the open note's name, and
+you rename a note from the sidebar. Below the editor there is a Slack input.
+When you send a
 message it goes to a Slack Incoming Webhook and is also appended to the
 current note with a timestamp, so the note keeps a record of what you
 posted.
@@ -22,9 +23,10 @@ must use https.
 
 ## Usage
 
-Cmd+N creates a note and Cmd+Shift+N creates a folder. Type in the editor
-and it saves as you go. The first line is the filename, so changing the
-first line renames the file. Drag notes and folders in the sidebar to move
+Cmd+N creates a note and Cmd+Shift+N creates a folder. A new note opens with
+its name ready to type in the sidebar. Type in the editor and it saves as you
+go. Rename a note later by selecting its row and pressing Return, or right
+click a row in the sidebar. Drag notes and folders in the sidebar to move
 them, or right click a row for rename, new note, new folder, and move to
 trash.
 

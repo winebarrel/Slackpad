@@ -27,20 +27,21 @@ extension AppModel {
         settings.expandedFolders = expanded.map(\.path)
     }
 
-    /// Create an "Untitled" note file immediately and open it, with the first
-    /// line ("Untitled") selected so typing replaces it (Finder-style).
+    /// Create an "Untitled" note and open it, then start an inline rename in the
+    /// sidebar so its name is immediately editable. The body starts empty.
     /// `folder` overrides the target (e.g. the root from the empty-area menu).
     func newNote(in folder: URL? = nil) {
         guard rootURL != nil else { return }
         flush()
         let dir = folder ?? targetFolder()
         let url = Filename.uniqueURL(dir: dir, base: Self.untitled)
-        try? Self.untitled.data(using: .utf8)?.write(to: url, options: .atomic)
+        try? Data().write(to: url, options: .atomic)
         revealFolder(dir)
         reloadTree()
         selection = url
         openNote(url)
-        selectFirstLineToken += 1
+        renameTargetURL = url
+        beginRenameToken += 1
     }
 
     func newFolder(in folder: URL? = nil) {
@@ -126,8 +127,8 @@ extension AppModel {
 
     // MARK: Rename
 
-    /// Rename a sidebar item. Folders rename in place; for a note, renaming
-    /// rewrites its first line (which is the source of truth for its filename).
+    /// Rename a sidebar item. Both folders and notes are renamed on disk; a
+    /// note's body is left untouched.
     func rename(_ url: URL, to newName: String) {
         let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
@@ -157,35 +158,17 @@ extension AppModel {
     }
 
     private func renameNote(_ url: URL, to newName: String) {
-        if url == openNoteURL {
-            editorText = Self.replacingFirstLine(editorText, with: newName)
-            saveNow() // renames the file to match the new first line
-            return
-        }
-        let content = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-        let newContent = Self.replacingFirstLine(content, with: newName)
+        let base = Filename.sanitize(newName)
         let dir = url.deletingLastPathComponent()
-        let dest = Filename.uniqueURL(dir: dir, base: Filename.base(fromBody: newContent), excluding: url)
-        // Rename first, then rewrite the body, so a failed move can't leave a
-        // new first line under the old filename (keeps rename all-or-nothing).
-        var final = url
-        if dest != url {
-            guard (try? FileManager.default.moveItem(at: url, to: dest)) != nil else { return }
-            final = dest
-        }
-        // Preserve the creation date, which an atomic write would otherwise reset.
-        Self.writePreservingCreationDate(newContent.data(using: .utf8) ?? Data(), to: final)
-        if settings.lastOpenNote == url.path { settings.lastOpenNote = final.path }
-        selection = final
+        let dest = Filename.uniqueURL(dir: dir, base: base, excluding: url)
+        guard dest != url else { return }
+        // Persist the open note's buffer before moving so the latest body
+        // travels with the file.
+        if url == openNoteURL { flush() }
+        guard (try? FileManager.default.moveItem(at: url, to: dest)) != nil else { return }
+        remapPaths(from: url, to: dest)
+        selection = dest
         reloadTree()
-    }
-
-    /// Replace the first line of `content`, keeping the rest of the body intact.
-    static func replacingFirstLine(_ content: String, with first: String) -> String {
-        if let newline = content.firstIndex(of: "\n") {
-            return first + String(content[newline...])
-        }
-        return first
     }
 
     /// After moving `oldDir` to `newDir`, fix up any state that pointed inside it.

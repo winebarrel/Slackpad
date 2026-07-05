@@ -33,6 +33,9 @@ struct ContentView: View {
         .onAppear {
             columnVisibility = model.sidebarVisible ? .all : .detailOnly
         }
+        // Show the open note's filename in the window title (display only;
+        // renaming is done from the sidebar).
+        .navigationTitle(model.windowTitle)
     }
 }
 

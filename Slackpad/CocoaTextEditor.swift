@@ -20,7 +20,6 @@ struct CocoaTextEditor: NSViewRepresentable {
     var scrollToBottomToken: Int
     var restoreCursor: Int
     var restoreToken: Int
-    var selectFirstLineToken: Int
     var focusToken: Int
     var canPostSelection: Bool
     var onEdit: () -> Void
@@ -108,16 +107,6 @@ struct CocoaTextEditor: NSViewRepresentable {
                 textView.scrollRangeToVisible(NSRange(location: offset, length: 0))
             }
         }
-        if coord.lastSelectFirstLine != selectFirstLineToken {
-            coord.lastSelectFirstLine = selectFirstLineToken
-            let nsString = textView.string as NSString
-            let firstLineEnd = nsString.range(of: "\n").location
-            let length = firstLineEnd == NSNotFound ? nsString.length : firstLineEnd
-            DispatchQueue.main.async {
-                textView.window?.makeFirstResponder(textView)
-                textView.setSelectedRange(NSRange(location: 0, length: length))
-            }
-        }
     }
 
     /// Mark http(s) URLs in the body as clickable links. This only adds display
@@ -142,7 +131,6 @@ struct CocoaTextEditor: NSViewRepresentable {
         var parent: CocoaTextEditor
         var lastScroll = 0
         var lastRestore = 0
-        var lastSelectFirstLine = 0
         var lastFocus = 0
         var isProgrammatic = false
         private weak var editedTextView: NSTextView?

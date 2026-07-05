@@ -23,7 +23,6 @@ struct EditorView: View {
                         scrollToBottomToken: model.scrollToBottomToken,
                         restoreCursor: model.restoreCursor,
                         restoreToken: model.restoreToken,
-                        selectFirstLineToken: model.selectFirstLineToken,
                         focusToken: model.focusEditorToken,
                         canPostSelection: settings.isWebhookConfigured,
                         onEdit: { model.scheduleSave() },

@@ -12,7 +12,6 @@ struct SidebarView: View {
     @State private var selection: Set<URL> = []
     @State private var renaming: URL?
     @State private var renameText = ""
-    @FocusState private var renameFocus: URL?
 
     var body: some View {
         List(selection: $selection) {
@@ -22,7 +21,6 @@ struct SidebarView: View {
                     selection: selection,
                     renaming: $renaming,
                     renameText: $renameText,
-                    renameFocus: $renameFocus,
                     begin: begin,
                     commit: commit,
                     cancel: cancel,
@@ -49,14 +47,17 @@ struct SidebarView: View {
             if let value, selection != [value] { selection = [value] }
         }
         .onAppear { selection = model.selection.map { Set([$0]) } ?? [] }
+        // Start an inline rename when the model asks (e.g. a new note), so its
+        // name is immediately editable in the sidebar with the whole name
+        // selected for type-to-replace.
+        .onChange(of: model.beginRenameToken) { _, _ in
+            if let url = model.renameTargetURL { begin(url) }
+        }
         .onDeleteCommand { model.deleteAll(selection) }
         .onKeyPress(.return) {
             guard renaming == nil, selection.count == 1, let sel = selection.first else { return .ignored }
             begin(sel)
             return .handled
-        }
-        .onChange(of: renameFocus) { _, focus in
-            if focus == nil, renaming != nil { commit() }
         }
         .dropDestination(for: URL.self) { urls, _ in
             guard let root = model.rootURL else { return false }
@@ -71,19 +72,16 @@ struct SidebarView: View {
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
         renameText = isDir.boolValue ? url.lastPathComponent : url.deletingPathExtension().lastPathComponent
         renaming = url
-        renameFocus = url
     }
 
     private func commit() {
         guard let url = renaming else { return }
         renaming = nil
-        renameFocus = nil
         model.rename(url, to: renameText)
     }
 
     private func cancel() {
         renaming = nil
-        renameFocus = nil
     }
 }
 
@@ -93,7 +91,6 @@ private struct NodeRow: View {
     let selection: Set<URL>
     @Binding var renaming: URL?
     @Binding var renameText: String
-    @FocusState.Binding var renameFocus: URL?
     let begin: (URL) -> Void
     let commit: () -> Void
     let cancel: () -> Void
@@ -108,7 +105,6 @@ private struct NodeRow: View {
                         selection: selection,
                         renaming: $renaming,
                         renameText: $renameText,
-                        renameFocus: $renameFocus,
                         begin: begin,
                         commit: commit,
                         cancel: cancel,
@@ -135,17 +131,12 @@ private struct NodeRow: View {
 
     @ViewBuilder private func label(system: String) -> some View {
         if renaming == node.url {
-            // Explicit white field + label-coloured text so it stays legible
-            // over the row's blue selection highlight (Finder-style).
-            TextField("", text: $renameText)
-                .textFieldStyle(.plain)
-                .foregroundStyle(Color(nsColor: .labelColor))
+            // White field + label-coloured text so it stays legible over the
+            // row's blue selection highlight (Finder-style).
+            RenameField(text: $renameText, onCommit: commit, onCancel: cancel)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
                 .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 4))
-                .focused($renameFocus, equals: node.url)
-                .onSubmit(commit)
-                .onExitCommand(perform: cancel)
                 .accessibilityLabel("Name")
         } else {
             Label(node.name, systemImage: system)
@@ -164,6 +155,89 @@ private struct NodeRow: View {
             Button("New Folder") { model.selection = node.url; model.newFolder() }
             Divider()
             Button("Move to Trash", role: .destructive) { model.delete(node.url) }
+        }
+    }
+}
+
+/// Inline rename field backed by NSTextField. Unlike SwiftUI's TextField it can
+/// select all of its text the instant it appears, so a new note's "Untitled"
+/// name is highlighted and typing replaces it (Finder style). Commits on Return
+/// or focus loss, cancels on Escape.
+private struct RenameField: NSViewRepresentable {
+    @Binding var text: String
+    var onCommit: () -> Void
+    var onCancel: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = FocusSelectingTextField()
+        field.delegate = context.coordinator
+        field.stringValue = text
+        field.font = .systemFont(ofSize: NSFont.systemFontSize)
+        field.usesSingleLineMode = true
+        field.lineBreakMode = .byTruncatingTail
+        field.cell?.isScrollable = true
+        // Transparent field; the legible white background is drawn in SwiftUI
+        // behind it (see label()), matching the plain-text-field look and
+        // keeping the text readable over the row's blue selection highlight.
+        field.isBezeled = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.textColor = .labelColor
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        context.coordinator.parent = self
+        if field.stringValue != text {
+            field.stringValue = text
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: RenameField
+
+        init(_ parent: RenameField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let field = notification.object as? NSTextField else { return }
+            parent.text = field.stringValue
+        }
+
+        func controlTextDidEndEditing(_: Notification) {
+            // Return, Tab and click-away all end editing; commit the name.
+            // Escape is intercepted in doCommandBy and cancels before this runs.
+            parent.onCommit()
+        }
+
+        func control(_: NSControl, textView _: NSTextView, doCommandBy selector: Selector) -> Bool {
+            if selector == #selector(NSResponder.cancelOperation(_:)) {
+                parent.onCancel()
+                return true
+            }
+            return false
+        }
+    }
+}
+
+/// NSTextField that selects all its text once it is placed in a window, so the
+/// rename starts with the whole name highlighted.
+private final class FocusSelectingTextField: NSTextField {
+    private var didFocus = false
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard window != nil, !didFocus else { return }
+        didFocus = true
+        // Defer so the window is key and can take first responder.
+        DispatchQueue.main.async { [weak self] in
+            self?.selectText(nil)
         }
     }
 }
