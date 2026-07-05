@@ -1,6 +1,5 @@
 # Slackpad [![Build](https://github.com/winebarrel/Slackpad/actions/workflows/ci.yml/badge.svg)](https://github.com/winebarrel/TenkiMap/actions/workflows/build.yml) [![AI Generated](https://img.shields.io/badge/AI%20Generated-Claude-orange?logo=anthropic)](https://claude.ai/claude-code)
 
-
 Slackpad is a macOS note taking app that keeps your notes as plain .txt
 files and posts to Slack as you write.
 
@@ -12,6 +11,9 @@ current note with a timestamp, so the note keeps a record of what you
 posted.
 
 ![Slackpad main window](docs/images/main.png)
+
+![](https://github.com/user-attachments/assets/fc1c3215-7a12-4b29-85c1-fe178b01c929)
+
 
 ## Setup
 
