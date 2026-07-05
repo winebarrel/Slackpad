@@ -11,6 +11,8 @@ message it goes to a Slack Incoming Webhook and is also appended to the
 current note with a timestamp, so the note keeps a record of what you
 posted.
 
+![Slackpad demo](docs/images/demo.gif)
+
 ![Slackpad main window](docs/images/main.png)
 
 ## Setup
