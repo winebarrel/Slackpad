@@ -82,7 +82,7 @@ struct SettingsView: View {
     }
 }
 
-#Preview("Slackpad") {
+#Preview("Slackpad Settings") {
     let model = AppModel()
     model.settings.webhookURL = "https://hooks.slack.com/services/T000/B000/XXXX"
     model.rootURL = URL(fileURLWithPath: "/Users/you/Documents")

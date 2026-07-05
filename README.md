@@ -13,9 +13,6 @@ posted.
 
 ![Slackpad main window](docs/images/main.png)
 
-![](https://github.com/user-attachments/assets/fc1c3215-7a12-4b29-85c1-fe178b01c929)
-
-
 ## Setup
 
 On first launch Slackpad asks for a folder to store notes in. The default

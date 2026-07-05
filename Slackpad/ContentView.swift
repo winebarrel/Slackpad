@@ -39,18 +39,27 @@ struct ContentView: View {
     }
 }
 
-#Preview("Slackpad") {
+#Preview("Meeting notes") {
     let model = AppModel()
     let manager = FileManager.default
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("SlackpadPreview-\(UUID().uuidString)")
     let projects = dir.appendingPathComponent("Projects")
     try? manager.createDirectory(at: projects, withIntermediateDirectories: true)
-    try? "Meeting notes\n\n10:15 Standup done\n11:00 Ship the beta"
-        .write(to: dir.appendingPathComponent("Meeting notes.txt"), atomically: true, encoding: .utf8)
-    try? "Ideas\n\n- keep notes as plain text\n- post to Slack while writing"
+    try? """
+    Agenda
+    - Review the roadmap
+    - Pick the release date
+    - Assign follow-ups
+
+    Posted to Slack
+    10:15 Standup done, shipping the beta today
+    11:00 Release notes drafted: https://example.com
+    """
+    .write(to: dir.appendingPathComponent("Meeting notes.txt"), atomically: true, encoding: .utf8)
+    try? "- keep notes as plain text\n- post to Slack while writing\n- add fuzzy search someday"
         .write(to: dir.appendingPathComponent("Ideas.txt"), atomically: true, encoding: .utf8)
-    try? "Slackpad\n\nWrite the README."
+    try? "Write the README\nAdd screenshots\nTag the first release"
         .write(to: projects.appendingPathComponent("Slackpad.txt"), atomically: true, encoding: .utf8)
 
     model.settings.webhookURL = "https://hooks.slack.com/services/preview"
