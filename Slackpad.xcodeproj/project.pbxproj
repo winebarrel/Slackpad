@@ -192,6 +192,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = jp.winebarrel.Slackpad;
 				PRODUCT_NAME = Slackpad;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -219,6 +220,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = jp.winebarrel.Slackpad;
 				PRODUCT_NAME = Slackpad;
 				PROVISIONING_PROFILE_SPECIFIER = "";
