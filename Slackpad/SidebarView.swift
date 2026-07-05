@@ -74,13 +74,18 @@ struct SidebarView: View {
         renaming = url
     }
 
-    private func commit() {
-        guard let url = renaming else { return }
+    /// `url` identifies the field that ended editing. AppKit can deliver a
+    /// field's end/cancel callback after a different rename has already begun
+    /// (e.g. ⌘N starts a new note's rename); ignore the stale one so it can't
+    /// commit or cancel the wrong target.
+    private func commit(_ url: URL) {
+        guard renaming == url else { return }
         renaming = nil
         model.rename(url, to: renameText)
     }
 
-    private func cancel() {
+    private func cancel(_ url: URL) {
+        guard renaming == url else { return }
         renaming = nil
     }
 }
@@ -92,8 +97,8 @@ private struct NodeRow: View {
     @Binding var renaming: URL?
     @Binding var renameText: String
     let begin: (URL) -> Void
-    let commit: () -> Void
-    let cancel: () -> Void
+    let commit: (URL) -> Void
+    let cancel: (URL) -> Void
     let deleteSelection: () -> Void
 
     var body: some View {
@@ -133,7 +138,7 @@ private struct NodeRow: View {
         if renaming == node.url {
             // White field + label-coloured text so it stays legible over the
             // row's blue selection highlight (Finder-style).
-            RenameField(text: $renameText, onCommit: commit, onCancel: cancel)
+            RenameField(text: $renameText, onCommit: { commit(node.url) }, onCancel: { cancel(node.url) })
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
                 .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 4))
