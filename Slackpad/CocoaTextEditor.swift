@@ -17,15 +17,17 @@ final class FocusReportingTextView: NSTextView {
     }
 
     /// One indent level: the configured spaces, or a literal tab.
-    private var indentUnit: String { tabReplacement ?? "\t" }
+    private var indentUnit: String {
+        tabReplacement ?? "\t"
+    }
 
     override func insertTab(_ sender: Any?) {
-        let ns = string as NSString
-        let lines = lineRanges(in: ns, for: selectedRange())
+        let nsString = string as NSString
+        let lines = lineRanges(in: nsString, for: selectedRange())
         // For list items, Tab indents the whole line rather than inserting at
         // the caret. Trigger when any touched line is a bullet ("-" or "*").
-        if lines.contains(where: { isListLine(ns, $0) }) {
-            indent(lines: lines, in: ns)
+        if lines.contains(where: { isListLine(nsString, $0) }) {
+            indent(lines: lines, in: nsString)
             return
         }
         guard let spaces = tabReplacement else {
@@ -39,17 +41,18 @@ final class FocusReportingTextView: NSTextView {
     /// Shift+Tab: strip one level of indentation from every line the selection
     /// touches — a leading tab, or up to `indentWidth` leading spaces.
     override func insertBacktab(_: Any?) {
-        let ns = string as NSString
+        let nsString = string as NSString
         var ranges: [NSRange] = []
-        for line in lineRanges(in: ns, for: selectedRange()) {
+        for line in lineRanges(in: nsString, for: selectedRange()) {
             var remove = 0
             if line.length > 0 {
-                if ns.character(at: line.location) == 0x09 { // tab
+                if nsString.character(at: line.location) == 0x09 { // tab
                     remove = 1
                 } else {
                     while remove < indentWidth,
-                          line.location + remove < ns.length,
-                          ns.character(at: line.location + remove) == 0x20 { // space
+                          line.location + remove < nsString.length,
+                          nsString.character(at: line.location + remove) == 0x20
+                    { // space
                         remove += 1
                     }
                 }
@@ -71,7 +74,9 @@ final class FocusReportingTextView: NSTextView {
         let replacements = ranges.map { _ in "" }
         guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
         textStorage?.beginEditing()
-        for range in ranges.reversed() { textStorage?.replaceCharacters(in: range, with: "") }
+        for range in ranges.reversed() {
+            textStorage?.replaceCharacters(in: range, with: "")
+        }
         textStorage?.endEditing()
         didChangeText()
 
@@ -102,7 +107,9 @@ final class FocusReportingTextView: NSTextView {
         let replacements = ranges.map { _ in unit }
         guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
         textStorage?.beginEditing()
-        for start in starts.reversed() { textStorage?.replaceCharacters(in: NSRange(location: start, length: 0), with: unit) }
+        for start in starts.reversed() {
+            textStorage?.replaceCharacters(in: NSRange(location: start, length: 0), with: unit)
+        }
         textStorage?.endEditing()
         didChangeText()
 
@@ -112,13 +119,13 @@ final class FocusReportingTextView: NSTextView {
     }
 
     /// Line ranges (each including its trailing newline) that the selection touches.
-    private func lineRanges(in ns: NSString, for selection: NSRange) -> [NSRange] {
-        let span = ns.lineRange(for: selection)
+    private func lineRanges(in nsString: NSString, for selection: NSRange) -> [NSRange] {
+        let span = nsString.lineRange(for: selection)
         var result: [NSRange] = []
         var cursor = span.location
         let end = span.location + span.length
         repeat {
-            let line = ns.lineRange(for: NSRange(location: cursor, length: 0))
+            let line = nsString.lineRange(for: NSRange(location: cursor, length: 0))
             result.append(line)
             cursor = line.location + line.length
             if line.length == 0 { break }
@@ -127,13 +134,13 @@ final class FocusReportingTextView: NSTextView {
     }
 
     /// True when the first non-blank character of the line is a bullet ("-" or "*").
-    private func isListLine(_ ns: NSString, _ line: NSRange) -> Bool {
-        var i = line.location
+    private func isListLine(_ nsString: NSString, _ line: NSRange) -> Bool {
+        var index = line.location
         let end = line.location + line.length
-        while i < end {
-            let c = ns.character(at: i)
-            if c == 0x20 || c == 0x09 { i += 1; continue } // skip spaces/tabs
-            return c == 0x2D || c == 0x2A // "-" or "*"
+        while index < end {
+            let char = nsString.character(at: index)
+            if char == 0x20 || char == 0x09 { index += 1; continue } // skip spaces/tabs
+            return char == 0x2D || char == 0x2A // "-" or "*"
         }
         return false
     }
