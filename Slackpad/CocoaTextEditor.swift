@@ -7,6 +7,9 @@ final class FocusReportingTextView: NSTextView {
     /// Spaces to insert for a Tab keypress, or nil to insert a literal tab.
     var tabReplacement: String?
 
+    /// Width, in spaces, that Shift+Tab strips from the start of a line.
+    var indentWidth = 4
+
     override func becomeFirstResponder() -> Bool {
         let became = super.becomeFirstResponder()
         if became { onFocus?() }
@@ -20,6 +23,60 @@ final class FocusReportingTextView: NSTextView {
         }
         // insertText keeps undo working and fires the delegate's textDidChange.
         insertText(spaces, replacementRange: selectedRange())
+    }
+
+    /// Shift+Tab: strip one level of indentation from every line the selection
+    /// touches — a leading tab, or up to `indentWidth` leading spaces.
+    override func insertBacktab(_ sender: Any?) {
+        let ns = string as NSString
+        let selection = selectedRange()
+        let lineSpan = ns.lineRange(for: selection)
+
+        var ranges: [NSRange] = []
+        var cursor = lineSpan.location
+        let end = lineSpan.location + lineSpan.length
+        repeat {
+            let line = ns.lineRange(for: NSRange(location: cursor, length: 0))
+            var remove = 0
+            if line.length > 0 {
+                if ns.character(at: line.location) == 0x09 { // tab
+                    remove = 1
+                } else {
+                    while remove < indentWidth,
+                          line.location + remove < ns.length,
+                          ns.character(at: line.location + remove) == 0x20 { // space
+                        remove += 1
+                    }
+                }
+            }
+            if remove > 0 { ranges.append(NSRange(location: line.location, length: remove)) }
+            cursor = line.location + line.length
+            if line.length == 0 { break }
+        } while cursor < end
+
+        guard !ranges.isEmpty else { return }
+
+        // Adjust the selection for the characters removed before it and within it.
+        var newStart = selection.location
+        var newLength = selection.length
+        let selEnd = selection.location + selection.length
+        for range in ranges {
+            let rangeEnd = range.location + range.length
+            newStart -= max(0, min(rangeEnd, selection.location) - range.location)
+            newLength -= max(0, min(rangeEnd, selEnd) - max(range.location, selection.location))
+        }
+
+        let replacements = Array(repeating: "", count: ranges.count)
+        let rangeValues = ranges.map { NSValue(range: $0) }
+        guard shouldChangeText(inRanges: rangeValues, replacementStrings: replacements) else { return }
+        textStorage?.beginEditing()
+        for range in ranges.reversed() { textStorage?.replaceCharacters(in: range, with: "") }
+        textStorage?.endEditing()
+        didChangeText()
+
+        let length = (string as NSString).length
+        setSelectedRange(NSRange(location: min(max(newStart, 0), length),
+                                 length: min(max(newLength, 0), length - min(max(newStart, 0), length))))
     }
 }
 
@@ -88,6 +145,7 @@ struct CocoaTextEditor: NSViewRepresentable {
         ]
         textView.string = text
         textView.tabReplacement = tabReplacement
+        textView.indentWidth = max(1, tabWidth)
         textView.onFocus = { [weak coordinator = context.coordinator] in coordinator?.parent.onFocus() }
         scroll.documentView = textView
         Self.applyLinks(textView)
@@ -109,7 +167,10 @@ struct CocoaTextEditor: NSViewRepresentable {
             Self.applyLinks(textView)
         }
         if textView.font != font { textView.font = font }
-        if let focusView = textView as? FocusReportingTextView { focusView.tabReplacement = tabReplacement }
+        if let focusView = textView as? FocusReportingTextView {
+            focusView.tabReplacement = tabReplacement
+            focusView.indentWidth = max(1, tabWidth)
+        }
 
         let coord = context.coordinator
         if coord.lastFocus != focusToken {
