@@ -184,6 +184,8 @@ final class AppSettings {
         sortAscending = defaults.bool(forKey: Key.sortAscending)
         postTimestamp = PostTimestamp(rawValue: defaults.string(forKey: Key.postTimestamp) ?? "") ?? .time
         convertTabToSpaces = defaults.bool(forKey: Key.convertTabToSpaces)
-        tabWidth = defaults.integer(forKey: Key.tabWidth)
+        // Clamp to the range the Settings stepper allows; a missing or
+        // corrupted key can otherwise yield 0.
+        tabWidth = min(max(defaults.integer(forKey: Key.tabWidth), 1), 8)
     }
 }
