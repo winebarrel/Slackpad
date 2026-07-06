@@ -27,6 +27,33 @@ final class FocusReportingTextView: NSTextView {
         indent(lines: lineRanges(in: nsString, for: selectedRange()))
     }
 
+    /// Return: if the caret sits on a line of only spaces/tabs, clear that
+    /// whitespace so the line left behind is empty instead of trailing blanks.
+    override func insertNewline(_ sender: Any?) {
+        guard selectedRange().length == 0 else {
+            super.insertNewline(sender)
+            return
+        }
+        let nsString = string as NSString
+        let line = nsString.lineRange(for: selectedRange())
+        var contentEnd = line.location + line.length
+        while contentEnd > line.location {
+            let char = nsString.character(at: contentEnd - 1)
+            if char == 0x0A || char == 0x0D { contentEnd -= 1 } else { break } // strip newline
+        }
+        let content = NSRange(location: line.location, length: contentEnd - line.location)
+        guard content.length > 0, isAllWhitespace(nsString, content) else {
+            super.insertNewline(sender)
+            return
+        }
+        // Replace the whitespace with the newline in one edit: the old line
+        // becomes empty and the caret lands on a fresh empty line.
+        guard shouldChangeText(in: content, replacementString: "\n") else { return }
+        textStorage?.replaceCharacters(in: content, with: "\n")
+        didChangeText()
+        setSelectedRange(NSRange(location: content.location + 1, length: 0))
+    }
+
     /// Shift+Tab: strip one level of indentation from every line the selection
     /// touches — a leading tab, or up to `indentWidth` leading spaces.
     override func insertBacktab(_: Any?) {
@@ -120,6 +147,15 @@ final class FocusReportingTextView: NSTextView {
             if line.length == 0 { break }
         } while cursor < end
         return result
+    }
+
+    /// True when every character in the range is a space or tab.
+    private func isAllWhitespace(_ nsString: NSString, _ range: NSRange) -> Bool {
+        for offset in 0 ..< range.length {
+            let char = nsString.character(at: range.location + offset)
+            if char != 0x20, char != 0x09 { return false }
+        }
+        return true
     }
 }
 
