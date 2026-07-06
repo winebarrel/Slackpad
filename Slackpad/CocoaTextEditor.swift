@@ -21,21 +21,10 @@ final class FocusReportingTextView: NSTextView {
         tabReplacement ?? "\t"
     }
 
-    override func insertTab(_ sender: Any?) {
+    /// Tab: indent every line the selection touches by one level.
+    override func insertTab(_: Any?) {
         let nsString = string as NSString
-        let lines = lineRanges(in: nsString, for: selectedRange())
-        // For list items, Tab indents the whole line rather than inserting at
-        // the caret. Trigger when any touched line is a bullet ("-" or "*").
-        if lines.contains(where: { isListLine(nsString, $0) }) {
-            indent(lines: lines, in: nsString)
-            return
-        }
-        guard let spaces = tabReplacement else {
-            super.insertTab(sender)
-            return
-        }
-        // insertText keeps undo working and fires the delegate's textDidChange.
-        insertText(spaces, replacementRange: selectedRange())
+        indent(lines: lineRanges(in: nsString, for: selectedRange()))
     }
 
     /// Shift+Tab: strip one level of indentation from every line the selection
@@ -86,7 +75,7 @@ final class FocusReportingTextView: NSTextView {
     }
 
     /// Insert one indent level at the start of each given line.
-    private func indent(lines: [NSRange], in _: NSString) {
+    private func indent(lines: [NSRange]) {
         let unit = indentUnit
         let width = (unit as NSString).length
         let starts = lines.map(\.location)
@@ -131,18 +120,6 @@ final class FocusReportingTextView: NSTextView {
             if line.length == 0 { break }
         } while cursor < end
         return result
-    }
-
-    /// True when the first non-blank character of the line is a bullet ("-" or "*").
-    private func isListLine(_ nsString: NSString, _ line: NSRange) -> Bool {
-        var index = line.location
-        let end = line.location + line.length
-        while index < end {
-            let char = nsString.character(at: index)
-            if char == 0x20 || char == 0x09 { index += 1; continue } // skip spaces/tabs
-            return char == 0x2D || char == 0x2A // "-" or "*"
-        }
-        return false
     }
 }
 
