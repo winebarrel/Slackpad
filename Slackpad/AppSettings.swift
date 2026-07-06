@@ -57,6 +57,8 @@ final class AppSettings {
         static let sortKey = "sortKey"
         static let sortAscending = "sortAscending"
         static let postTimestamp = "postTimestamp"
+        static let convertTabToSpaces = "convertTabToSpaces"
+        static let tabWidth = "tabWidth"
         static let rootBookmark = "rootBookmark"
         static let lastOpenNote = "lastOpenNote"
         static let expandedFolders = "expandedFolders"
@@ -73,6 +75,7 @@ final class AppSettings {
             Key.sortAscending: false,
             Key.sidebarVisible: true,
             Key.postTimestamp: PostTimestamp.time.rawValue,
+            Key.tabWidth: 4,
         ])
     }
 
@@ -101,6 +104,18 @@ final class AppSettings {
     /// Timestamp prepended when a post is appended to the note body.
     var postTimestamp: PostTimestamp = .time {
         didSet { defaults.set(postTimestamp.rawValue, forKey: Key.postTimestamp) }
+    }
+
+    // MARK: Editor input
+
+    /// When true, a Tab keypress inserts `tabWidth` spaces instead of a tab.
+    var convertTabToSpaces: Bool = false {
+        didSet { defaults.set(convertTabToSpaces, forKey: Key.convertTabToSpaces) }
+    }
+
+    /// Number of spaces inserted for a Tab when `convertTabToSpaces` is on.
+    var tabWidth: Int = 4 {
+        didSet { defaults.set(tabWidth, forKey: Key.tabWidth) }
     }
 
     // MARK: Editor font
@@ -168,5 +183,7 @@ final class AppSettings {
         sortKey = SortKey(rawValue: defaults.string(forKey: Key.sortKey) ?? "") ?? .created
         sortAscending = defaults.bool(forKey: Key.sortAscending)
         postTimestamp = PostTimestamp(rawValue: defaults.string(forKey: Key.postTimestamp) ?? "") ?? .time
+        convertTabToSpaces = defaults.bool(forKey: Key.convertTabToSpaces)
+        tabWidth = defaults.integer(forKey: Key.tabWidth)
     }
 }

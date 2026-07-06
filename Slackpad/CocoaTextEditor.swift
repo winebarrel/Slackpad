@@ -4,10 +4,22 @@ import SwiftUI
 final class FocusReportingTextView: NSTextView {
     var onFocus: (() -> Void)?
 
+    /// Spaces to insert for a Tab keypress, or nil to insert a literal tab.
+    var tabReplacement: String?
+
     override func becomeFirstResponder() -> Bool {
         let became = super.becomeFirstResponder()
         if became { onFocus?() }
         return became
+    }
+
+    override func insertTab(_ sender: Any?) {
+        guard let spaces = tabReplacement else {
+            super.insertTab(sender)
+            return
+        }
+        // insertText keeps undo working and fires the delegate's textDidChange.
+        insertText(spaces, replacementRange: selectedRange())
     }
 }
 
@@ -22,10 +34,17 @@ struct CocoaTextEditor: NSViewRepresentable {
     var restoreToken: Int
     var focusToken: Int
     var canPostSelection: Bool
+    var convertTabToSpaces: Bool
+    var tabWidth: Int
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
     var onPostSelection: (String) -> Void
     var onFocus: () -> Void
+
+    /// Spaces to substitute for a Tab, or nil to keep the literal tab.
+    private var tabReplacement: String? {
+        convertTabToSpaces ? String(repeating: " ", count: max(1, tabWidth)) : nil
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -68,6 +87,7 @@ struct CocoaTextEditor: NSViewRepresentable {
             .underlineStyle: NSUnderlineStyle.single.rawValue,
         ]
         textView.string = text
+        textView.tabReplacement = tabReplacement
         textView.onFocus = { [weak coordinator = context.coordinator] in coordinator?.parent.onFocus() }
         scroll.documentView = textView
         Self.applyLinks(textView)
@@ -89,6 +109,7 @@ struct CocoaTextEditor: NSViewRepresentable {
             Self.applyLinks(textView)
         }
         if textView.font != font { textView.font = font }
+        if let focusView = textView as? FocusReportingTextView { focusView.tabReplacement = tabReplacement }
 
         let coord = context.coordinator
         if coord.lastFocus != focusToken {

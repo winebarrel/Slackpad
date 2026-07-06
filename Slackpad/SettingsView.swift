@@ -44,7 +44,7 @@ struct SettingsView: View {
                 Button("Change...") { model.chooseRoot() }
             }
 
-            Section("Editor Font") {
+            Section("Editor") {
                 Picker("Font", selection: fontSelection) {
                     Text("System Font").tag("")
                     Divider()
@@ -55,6 +55,11 @@ struct SettingsView: View {
                 Stepper(value: $settings.fontSize, in: 0 ... 48, step: 1) {
                     Text(settings.fontSize > 0 ? "Size: \(Int(settings.fontSize)) pt" : "Size: Default")
                 }
+                Toggle("Convert tab to spaces", isOn: $settings.convertTabToSpaces)
+                Stepper(value: $settings.tabWidth, in: 1 ... 8, step: 1) {
+                    Text("Spaces: \(settings.tabWidth)")
+                }
+                .disabled(!settings.convertTabToSpaces)
             }
 
             Section("Sort Notes") {
