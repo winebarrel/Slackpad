@@ -16,7 +16,18 @@ final class FocusReportingTextView: NSTextView {
         return became
     }
 
+    /// One indent level: the configured spaces, or a literal tab.
+    private var indentUnit: String { tabReplacement ?? "\t" }
+
     override func insertTab(_ sender: Any?) {
+        let ns = string as NSString
+        let lines = lineRanges(in: ns, for: selectedRange())
+        // For list items, Tab indents the whole line rather than inserting at
+        // the caret. Trigger when any touched line is a bullet ("-" or "*").
+        if lines.contains(where: { isListLine(ns, $0) }) {
+            indent(lines: lines, in: ns)
+            return
+        }
         guard let spaces = tabReplacement else {
             super.insertTab(sender)
             return
@@ -27,16 +38,10 @@ final class FocusReportingTextView: NSTextView {
 
     /// Shift+Tab: strip one level of indentation from every line the selection
     /// touches — a leading tab, or up to `indentWidth` leading spaces.
-    override func insertBacktab(_ sender: Any?) {
+    override func insertBacktab(_: Any?) {
         let ns = string as NSString
-        let selection = selectedRange()
-        let lineSpan = ns.lineRange(for: selection)
-
         var ranges: [NSRange] = []
-        var cursor = lineSpan.location
-        let end = lineSpan.location + lineSpan.length
-        repeat {
-            let line = ns.lineRange(for: NSRange(location: cursor, length: 0))
+        for line in lineRanges(in: ns, for: selectedRange()) {
             var remove = 0
             if line.length > 0 {
                 if ns.character(at: line.location) == 0x09 { // tab
@@ -50,33 +55,87 @@ final class FocusReportingTextView: NSTextView {
                 }
             }
             if remove > 0 { ranges.append(NSRange(location: line.location, length: remove)) }
-            cursor = line.location + line.length
-            if line.length == 0 { break }
-        } while cursor < end
-
+        }
         guard !ranges.isEmpty else { return }
 
-        // Adjust the selection for the characters removed before it and within it.
+        let selection = selectedRange()
+        let selEnd = selection.location + selection.length
         var newStart = selection.location
         var newLength = selection.length
-        let selEnd = selection.location + selection.length
         for range in ranges {
             let rangeEnd = range.location + range.length
             newStart -= max(0, min(rangeEnd, selection.location) - range.location)
             newLength -= max(0, min(rangeEnd, selEnd) - max(range.location, selection.location))
         }
 
-        let replacements = Array(repeating: "", count: ranges.count)
-        let rangeValues = ranges.map { NSValue(range: $0) }
-        guard shouldChangeText(inRanges: rangeValues, replacementStrings: replacements) else { return }
+        let replacements = ranges.map { _ in "" }
+        guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
         textStorage?.beginEditing()
         for range in ranges.reversed() { textStorage?.replaceCharacters(in: range, with: "") }
         textStorage?.endEditing()
         didChangeText()
 
         let length = (string as NSString).length
-        setSelectedRange(NSRange(location: min(max(newStart, 0), length),
-                                 length: min(max(newLength, 0), length - min(max(newStart, 0), length))))
+        newStart = min(max(newStart, 0), length)
+        setSelectedRange(NSRange(location: newStart, length: min(max(newLength, 0), length - newStart)))
+    }
+
+    /// Insert one indent level at the start of each given line.
+    private func indent(lines: [NSRange], in _: NSString) {
+        let unit = indentUnit
+        let width = (unit as NSString).length
+        let starts = lines.map(\.location)
+
+        let selection = selectedRange()
+        let selEnd = selection.location + selection.length
+        var newStart = selection.location
+        var newLength = selection.length
+        for start in starts {
+            if start <= selection.location {
+                newStart += width
+            } else if start <= selEnd {
+                newLength += width
+            }
+        }
+
+        let ranges = starts.map { NSRange(location: $0, length: 0) }
+        let replacements = ranges.map { _ in unit }
+        guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
+        textStorage?.beginEditing()
+        for start in starts.reversed() { textStorage?.replaceCharacters(in: NSRange(location: start, length: 0), with: unit) }
+        textStorage?.endEditing()
+        didChangeText()
+
+        let length = (string as NSString).length
+        newStart = min(max(newStart, 0), length)
+        setSelectedRange(NSRange(location: newStart, length: min(max(newLength, 0), length - newStart)))
+    }
+
+    /// Line ranges (each including its trailing newline) that the selection touches.
+    private func lineRanges(in ns: NSString, for selection: NSRange) -> [NSRange] {
+        let span = ns.lineRange(for: selection)
+        var result: [NSRange] = []
+        var cursor = span.location
+        let end = span.location + span.length
+        repeat {
+            let line = ns.lineRange(for: NSRange(location: cursor, length: 0))
+            result.append(line)
+            cursor = line.location + line.length
+            if line.length == 0 { break }
+        } while cursor < end
+        return result
+    }
+
+    /// True when the first non-blank character of the line is a bullet ("-" or "*").
+    private func isListLine(_ ns: NSString, _ line: NSRange) -> Bool {
+        var i = line.location
+        let end = line.location + line.length
+        while i < end {
+            let c = ns.character(at: i)
+            if c == 0x20 || c == 0x09 { i += 1; continue } // skip spaces/tabs
+            return c == 0x2D || c == 0x2A // "-" or "*"
+        }
+        return false
     }
 }
 
