@@ -4,10 +4,122 @@ import SwiftUI
 final class FocusReportingTextView: NSTextView {
     var onFocus: (() -> Void)?
 
+    /// Spaces to insert for a Tab keypress, or nil to insert a literal tab.
+    var tabReplacement: String?
+
+    /// Width, in spaces, that Shift+Tab strips from the start of a line.
+    var indentWidth = 4
+
     override func becomeFirstResponder() -> Bool {
         let became = super.becomeFirstResponder()
         if became { onFocus?() }
         return became
+    }
+
+    /// One indent level: the configured spaces, or a literal tab.
+    private var indentUnit: String {
+        tabReplacement ?? "\t"
+    }
+
+    /// Tab: indent every line the selection touches by one level.
+    override func insertTab(_: Any?) {
+        let nsString = string as NSString
+        indent(lines: lineRanges(in: nsString, for: selectedRange()))
+    }
+
+    /// Shift+Tab: strip one level of indentation from every line the selection
+    /// touches — a leading tab, or up to `indentWidth` leading spaces.
+    override func insertBacktab(_: Any?) {
+        let nsString = string as NSString
+        var ranges: [NSRange] = []
+        for line in lineRanges(in: nsString, for: selectedRange()) {
+            var remove = 0
+            if line.length > 0 {
+                if nsString.character(at: line.location) == 0x09 { // tab
+                    remove = 1
+                } else {
+                    while remove < indentWidth,
+                          line.location + remove < nsString.length,
+                          nsString.character(at: line.location + remove) == 0x20
+                    { // space
+                        remove += 1
+                    }
+                }
+            }
+            if remove > 0 { ranges.append(NSRange(location: line.location, length: remove)) }
+        }
+        guard !ranges.isEmpty else { return }
+
+        let selection = selectedRange()
+        let selEnd = selection.location + selection.length
+        var newStart = selection.location
+        var newLength = selection.length
+        for range in ranges {
+            let rangeEnd = range.location + range.length
+            newStart -= max(0, min(rangeEnd, selection.location) - range.location)
+            newLength -= max(0, min(rangeEnd, selEnd) - max(range.location, selection.location))
+        }
+
+        let replacements = ranges.map { _ in "" }
+        guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
+        textStorage?.beginEditing()
+        for range in ranges.reversed() {
+            textStorage?.replaceCharacters(in: range, with: "")
+        }
+        textStorage?.endEditing()
+        didChangeText()
+
+        let length = (string as NSString).length
+        newStart = min(max(newStart, 0), length)
+        setSelectedRange(NSRange(location: newStart, length: min(max(newLength, 0), length - newStart)))
+    }
+
+    /// Insert one indent level at the start of each given line.
+    private func indent(lines: [NSRange]) {
+        let unit = indentUnit
+        let width = (unit as NSString).length
+        let starts = lines.map(\.location)
+
+        let selection = selectedRange()
+        let selEnd = selection.location + selection.length
+        var newStart = selection.location
+        var newLength = selection.length
+        for start in starts {
+            if start <= selection.location {
+                newStart += width
+            } else if start <= selEnd {
+                newLength += width
+            }
+        }
+
+        let ranges = starts.map { NSRange(location: $0, length: 0) }
+        let replacements = ranges.map { _ in unit }
+        guard shouldChangeText(inRanges: ranges.map { NSValue(range: $0) }, replacementStrings: replacements) else { return }
+        textStorage?.beginEditing()
+        for start in starts.reversed() {
+            textStorage?.replaceCharacters(in: NSRange(location: start, length: 0), with: unit)
+        }
+        textStorage?.endEditing()
+        didChangeText()
+
+        let length = (string as NSString).length
+        newStart = min(max(newStart, 0), length)
+        setSelectedRange(NSRange(location: newStart, length: min(max(newLength, 0), length - newStart)))
+    }
+
+    /// Line ranges (each including its trailing newline) that the selection touches.
+    private func lineRanges(in nsString: NSString, for selection: NSRange) -> [NSRange] {
+        let span = nsString.lineRange(for: selection)
+        var result: [NSRange] = []
+        var cursor = span.location
+        let end = span.location + span.length
+        repeat {
+            let line = nsString.lineRange(for: NSRange(location: cursor, length: 0))
+            result.append(line)
+            cursor = line.location + line.length
+            if line.length == 0 { break }
+        } while cursor < end
+        return result
     }
 }
 
@@ -22,10 +134,17 @@ struct CocoaTextEditor: NSViewRepresentable {
     var restoreToken: Int
     var focusToken: Int
     var canPostSelection: Bool
+    var convertTabToSpaces: Bool
+    var tabWidth: Int
     var onEdit: () -> Void
     var onCursor: (Int) -> Void
     var onPostSelection: (String) -> Void
     var onFocus: () -> Void
+
+    /// Spaces to substitute for a Tab, or nil to keep the literal tab.
+    private var tabReplacement: String? {
+        convertTabToSpaces ? String(repeating: " ", count: max(1, tabWidth)) : nil
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -68,6 +187,8 @@ struct CocoaTextEditor: NSViewRepresentable {
             .underlineStyle: NSUnderlineStyle.single.rawValue,
         ]
         textView.string = text
+        textView.tabReplacement = tabReplacement
+        textView.indentWidth = max(1, tabWidth)
         textView.onFocus = { [weak coordinator = context.coordinator] in coordinator?.parent.onFocus() }
         scroll.documentView = textView
         Self.applyLinks(textView)
@@ -89,6 +210,10 @@ struct CocoaTextEditor: NSViewRepresentable {
             Self.applyLinks(textView)
         }
         if textView.font != font { textView.font = font }
+        if let focusView = textView as? FocusReportingTextView {
+            focusView.tabReplacement = tabReplacement
+            focusView.indentWidth = max(1, tabWidth)
+        }
 
         let coord = context.coordinator
         if coord.lastFocus != focusToken {

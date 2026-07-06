@@ -25,6 +25,8 @@ struct EditorView: View {
                         restoreToken: model.restoreToken,
                         focusToken: model.focusEditorToken,
                         canPostSelection: settings.isWebhookConfigured,
+                        convertTabToSpaces: settings.convertTabToSpaces,
+                        tabWidth: settings.tabWidth,
                         onEdit: { model.scheduleSave() },
                         onCursor: { model.updateCursor($0) },
                         onPostSelection: { model.postSelection($0) },
