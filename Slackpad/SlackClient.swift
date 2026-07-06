@@ -22,9 +22,11 @@ struct SlackClient {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["text": text])
 
         // URLSession sometimes reuses a keep-alive connection the server has
-        // already dropped, failing with "network connection lost" (-1005). The
-        // request never reached Slack, so retry a couple of times before giving
-        // up rather than surfacing a spurious error.
+        // already dropped, failing with "network connection lost" (-1005).
+        // That usually means the request was never sent, so retry a couple of
+        // times rather than surfacing a spurious error. In the rare case Slack
+        // did receive it first, a retry may duplicate the post — an acceptable
+        // tradeoff for a chat message versus a false failure.
         for delay in Self.retryDelays {
             do {
                 return try await send(request)
