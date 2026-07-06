@@ -29,7 +29,7 @@ struct SlackClient {
             do {
                 return try await send(request)
             } catch let error as URLError where error.code == .networkConnectionLost {
-                try? await Task.sleep(for: delay)
+                try await Task.sleep(for: delay)
             }
         }
         try await send(request)
