@@ -30,12 +30,14 @@ struct ContentView: View {
                             Image(systemName: "chevron.backward")
                         }
                         .help("Back (⌘[)")
+                        .accessibilityLabel("Back")
                         .disabled(!model.canGoBack)
 
                         Button { model.goForward() } label: {
                             Image(systemName: "chevron.forward")
                         }
                         .help("Forward (⌘])")
+                        .accessibilityLabel("Forward")
                         .disabled(!model.canGoForward)
                     }
                 }
