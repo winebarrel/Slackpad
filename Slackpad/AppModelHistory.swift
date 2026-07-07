@@ -2,6 +2,9 @@ import Foundation
 
 /// Browser-style back/forward navigation through the notes the user has opened.
 extension AppModel {
+    /// Upper bound on remembered notes; older entries are dropped past this.
+    private static let maxHistory = 50
+
     var canGoBack: Bool {
         hasReachableEntry(step: -1)
     }
@@ -30,6 +33,11 @@ extension AppModel {
             history.removeSubrange((historyIndex + 1)...)
         }
         history.append(url)
+        // Cap the history, dropping the oldest entries. The new note is always
+        // the current one, so the index is just the (trimmed) last position.
+        if history.count > Self.maxHistory {
+            history.removeFirst(history.count - Self.maxHistory)
+        }
         historyIndex = history.count - 1
     }
 
