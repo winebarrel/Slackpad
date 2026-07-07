@@ -24,6 +24,23 @@ struct ContentView: View {
                 }
         } detail: {
             EditorView(settings: model.settings)
+                .toolbar {
+                    ToolbarItemGroup(placement: .navigation) {
+                        Button { model.goBack() } label: {
+                            Image(systemName: "chevron.backward")
+                        }
+                        .help("Back (⌘[)")
+                        .accessibilityLabel("Back")
+                        .disabled(!model.canGoBack)
+
+                        Button { model.goForward() } label: {
+                            Image(systemName: "chevron.forward")
+                        }
+                        .help("Forward (⌘])")
+                        .accessibilityLabel("Forward")
+                        .disabled(!model.canGoForward)
+                    }
+                }
         }
         .onChange(of: model.settings.sortKey) { _, _ in model.reloadTree() }
         .onChange(of: model.settings.sortAscending) { _, _ in model.reloadTree() }

@@ -181,6 +181,9 @@ extension AppModel {
             return newDir.appendingPathComponent(relative)
         }
         if let open = openNoteURL, let moved = remap(open) { openNoteURL = moved }
+        // Follow the move in the back/forward history so a renamed/moved note
+        // stays reachable (and the current entry keeps matching the open note).
+        history = history.map { remap($0) ?? $0 }
         // Remap the persisted last-open path independently: the editor may be
         // closed while its note is moved as part of a folder move.
         if let last = settings.lastOpenNote, let moved = remap(URL(fileURLWithPath: last)) {

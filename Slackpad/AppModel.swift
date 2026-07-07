@@ -14,6 +14,11 @@ final class AppModel {
     var selection: URL?
     var sidebarVisible: Bool = true
 
+    // Browser-style back/forward history of opened notes. Managed by the
+    // history extension (AppModelHistory); views only read it.
+    var history: [URL] = []
+    var historyIndex = -1
+
     /// Editor
     var editorText: String = ""
     // Managed by the model; views only read it.
@@ -48,6 +53,8 @@ final class AppModel {
     @ObservationIgnored private var errorClearTask: Task<Void, Never>?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var didStart = false
+    // Suppresses history recording while back/forward is driving openNote.
+    @ObservationIgnored var navigatingHistory = false
     @ObservationIgnored private var dateFormatters: [String: DateFormatter] = [:]
 
     private func timestamp(format: String) -> String {
@@ -135,6 +142,9 @@ final class AppModel {
         expanded = Set(settings.expandedFolders.map { URL(fileURLWithPath: $0) }
             .filter { $0.path.hasPrefix(url.path + "/") })
         settings.expandedFolders = expanded.map(\.path)
+        // Drop history from any previous root; its URLs no longer apply.
+        history = []
+        historyIndex = -1
         reloadTree()
         watcher.onChange = { [weak self] in self?.scheduleRebuild() }
         watcher.start(url: url)
@@ -204,6 +214,8 @@ final class AppModel {
         openNoteURL = url
         currentCursor = 0
         settings.lastOpenNote = url.path
+        // Record every note open except those driven by back/forward itself.
+        if !navigatingHistory { recordHistory(url) }
         // Don't move focus to the editor: selecting a note in the sidebar
         // should keep keyboard focus there. New notes start an inline rename in
         // the sidebar via beginRenameToken instead.

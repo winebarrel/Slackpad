@@ -111,6 +111,14 @@ struct SlackpadApp: App {
                     .keyboardShortcut("l", modifiers: .command)
                     .disabled(!model.isEditorActive)
             }
+            CommandGroup(after: .sidebar) {
+                Button("Back") { model.goBack() }
+                    .keyboardShortcut("[", modifiers: .command)
+                    .disabled(!model.canGoBack)
+                Button("Forward") { model.goForward() }
+                    .keyboardShortcut("]", modifiers: .command)
+                    .disabled(!model.canGoForward)
+            }
         }
 
         Settings {
